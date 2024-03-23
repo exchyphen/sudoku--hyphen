@@ -1,35 +1,69 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
+
+import Cell from "./components/cell";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const MAX_ROW = 9;
+  const MAX_COL = 9;
+
+  // board data
+  const data__board = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
+
+  // helper function: create the board from cell components
+  const createBoard = () => {
+    const arr = [];
+
+    for (let i = 0; i < MAX_ROW * MAX_COL; i++) {
+      arr.push(<Cell key={`cell${i}`}></Cell>);
+    }
+
+    return arr;
+  };
+
+  useEffect(() => {
+    // initialize data board
+    for (let row = 0; row < MAX_ROW; row++) {
+      for (let col = 0; col < MAX_COL; col++) {
+        data__board[row][col] = {
+          value: undefined,
+          corner: [],
+          center: [],
+          given: false,
+        };
+      }
+    }
+  }, []);
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <header>
+        <hgroup>
+          <h1>Sudoku-</h1>
+          <p>A sudoku tool.</p>
+        </hgroup>
+      </header>
+      <main className="main">
+        <p>this is the board</p>
+
+        <article className="board">{createBoard()}</article>
+      </main>
+      <footer>
+        <hgroup>
+          <h2>
+            Created by{" "}
+            <a
+              href="https://github.com/exchyphen/sudoku--hyphen"
+              target="_blank"
+            >
+              exc
+            </a>
+          </h2>
+          <p>amateur sudoku player</p>
+        </hgroup>
+      </footer>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

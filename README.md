@@ -1,8 +1,19 @@
-# React + Vite
+# Sudoku-
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Description
 
-Currently, two official plugins are available:
+A tool to play Sudoku on.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Feature
+
+## Upcoming Features
+
+1. Playable board - (functional solver, checker, etc)
+2. Setting the board manually (inputting given numbers)
+3. Pencil marking
+4. Advanced pencil marking: corner marking
+5. Advanced pencil marking: center marking
+
+## Created By
+
+![exc](https://github.com/exchyphen)
