@@ -16,4 +16,4 @@ A tool to play Sudoku on.
 
 ## Created By
 
-![exc](https://github.com/exchyphen)
+[exc](https://github.com/exchyphen)
