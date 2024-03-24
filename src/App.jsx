@@ -1,38 +1,49 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import SudokuChecker from "./SudokuChecker.js";
 
 import Cell from "./components/cell";
 
 function App() {
+  const [focus, setFocus] = useState(undefined);
+
   const MAX_ROW = 9;
   const MAX_COL = 9;
 
   // board data
   const data__board = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
+  // initialize data board
+  for (let row = 0; row < MAX_ROW; row++) {
+    for (let col = 0; col < MAX_COL; col++) {
+      data__board[row][col] = {
+        value: 0,
+        corner: [],
+        center: [],
+        given: false,
+      };
+    }
+  }
+
+  // handlers
 
   // helper function: create the board from cell components
   const createBoard = () => {
     const arr = [];
 
-    for (let i = 0; i < MAX_ROW * MAX_COL; i++) {
-      arr.push(<Cell key={`cell${i}`}></Cell>);
+    for (let row = 0; row < MAX_ROW; row++) {
+      for (let col = 0; col < MAX_COL; col++) {
+        arr.push(
+          <Cell key={`cell-${row}-${col}`} data={data__board[row][col]}></Cell>
+        );
+      }
     }
 
     return arr;
   };
 
   useEffect(() => {
-    // initialize data board
-    for (let row = 0; row < MAX_ROW; row++) {
-      for (let col = 0; col < MAX_COL; col++) {
-        data__board[row][col] = {
-          value: undefined,
-          corner: [],
-          center: [],
-          given: false,
-        };
-      }
-    }
+    // test js
+    SudokuChecker.test();
   }, []);
 
   return (

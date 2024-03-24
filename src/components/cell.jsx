@@ -1,7 +1,9 @@
 import "./cell.css";
 
-const Cell = () => {
-  return <div className="cell">this is a cell</div>;
+const Cell = (props) => {
+  const data = props.data;
+
+  return <div className="cell">{data.value}</div>;
 };
 
 export default Cell;
