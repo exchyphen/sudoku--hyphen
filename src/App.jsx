@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import SudokuChecker from "./SudokuChecker.js";
+import SudokuLibrary from "./SudokuLibrary.js";
 
-import Cell from "./components/cell";
+import Box from "./components/box";
 
 function App() {
   const [focus, setFocus] = useState(undefined);
@@ -11,11 +11,15 @@ function App() {
   const MAX_COL = 9;
 
   // board data
+
   const data__board = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
   // initialize data board
   for (let row = 0; row < MAX_ROW; row++) {
     for (let col = 0; col < MAX_COL; col++) {
       data__board[row][col] = {
+        row: row,
+        col: col,
+        box: SudokuLibrary.findBox(row, col),
         value: 0,
         corner: [],
         center: [],
@@ -28,22 +32,25 @@ function App() {
 
   // helper function: create the board from cell components
   const createBoard = () => {
-    const arr = [];
+    const boxArr = Array(9);
+    for (let i = 0; i < boxArr.length; i++) {
+      boxArr[i] = [];
+    }
 
     for (let row = 0; row < MAX_ROW; row++) {
       for (let col = 0; col < MAX_COL; col++) {
-        arr.push(
-          <Cell key={`cell-${row}-${col}`} data={data__board[row][col]}></Cell>
-        );
+        boxArr[data__board[row][col].box].push(data__board[row][col]);
       }
     }
 
-    return arr;
+    return boxArr.map((data, index) => {
+      return <Box key={`box${index}`} data={data}></Box>;
+    });
   };
 
   useEffect(() => {
     // test js
-    SudokuChecker.test();
+    console.log(data__board);
   }, []);
 
   return (

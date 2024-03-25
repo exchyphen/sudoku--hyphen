@@ -3,11 +3,15 @@
     min-height: 4rem;
 
     padding: 1rem;
-
     border: 1px solid black;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .cell:hover {
     cursor: pointer;
-    background: gray;
+    background: orange;
+    filter: brightness(1.2);
 }
