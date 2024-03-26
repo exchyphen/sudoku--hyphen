@@ -8,10 +8,30 @@
     display: flex;
     justify-content: center;
     align-items: center;
+
+    position: relative;
 }
 
 .cell:hover {
     cursor: pointer;
     background: orange;
     filter: brightness(1.2);
+}
+
+.cell--focus {
+    background: red;
+}
+
+.cell--solved {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    font-weight: 700;
+
+    position: absolute;
+    background: green;
 }
