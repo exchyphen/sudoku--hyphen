@@ -1,9 +1,22 @@
+/* general */
+
+.button {
+
+}
+
+.button:hover {
+  cursor: pointer;
+  filter: brightness(1.2);
+}
+
+/* main */
+
 .main {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-
+  gap: 2rem;
 }
 
 .board {

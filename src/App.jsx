@@ -8,10 +8,17 @@ function App() {
   const MAX_ROW = 9;
   const MAX_COL = 9;
 
+  // states
   const [focus, setFocus] = useState([-1, -1]);
   const [valueArr, setValueArr] = useState(
     Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0))
   );
+  const [givenArr, setGivenArr] = useState(
+    Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(false))
+  );
+  const [inputGiven, setInputGiven] = useState(false);
+  // 0 = pen, 1 = corner marking
+  const [mode, setMode] = useState(0);
 
   // board data
   const data__board = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
@@ -22,7 +29,6 @@ function App() {
         row: row,
         col: col,
         box: SudokuLibrary.findBox(row, col),
-        given: false,
       };
     }
   }
@@ -52,20 +58,68 @@ function App() {
   };
 
   const handleKeyDown = (e) => {
-    if (e.keyCode < 49 || e.keyCode > 57) {
+    console.log("key pressed", e.keyCode);
+    const [row, col] = focus;
+
+    // arrow keys or wasd
+    // left or a
+    if (e.keyCode === 37 || e.keyCode === 65) {
+      setFocus([row, Math.max(0, col - 1)]);
+      return;
+    }
+    // right or d
+    if (e.keyCode === 39 || e.keyCode === 68) {
+      setFocus([row, Math.min(col + 1, MAX_COL - 1)]);
+      return;
+    }
+    // up or w
+    if (e.keyCode === 38 || e.keyCode === 87) {
+      setFocus([Math.max(0, row - 1), col]);
+      return;
+    }
+    // down or s
+    if (e.keyCode === 40 || e.keyCode === 83) {
+      setFocus([Math.min(row + 1, MAX_ROW - 1), col]);
       return;
     }
 
-    console.log("key", e.keyCode);
+    // if focus exists, overwrite the focus cell
+    if (row >= 0 && col >= 0) {
+      // if we are trying to overwrite a given number and we are not setting given: dont let it
+      if (givenArr[row][col] && !inputGiven) {
+        console.log("cannot overwrite given number");
+        return;
+      }
 
-    // if no focus, do nothing
-    if (focus[0] >= 0 && focus[1] >= 0) {
-      console.log("writing to", focus[0], focus[1]);
+      console.log("writing to", row, col);
+
       console.log("value", e.keyCode - 49 + 1);
 
+      // write to value array
       const newArr = copyArr(valueArr);
 
-      newArr[focus[0]][focus[1]] = e.keyCode - 49 + 1;
+      // valid 1 - 9
+      if (49 <= e.keyCode && e.keyCode <= 57) {
+        newArr[row][col] = e.keyCode - 49 + 1;
+
+        // inputting given numbers wehn setting given
+        if (inputGiven) {
+          const newGivenArr = copyArr(givenArr);
+          newGivenArr[row][col] = true;
+          setGivenArr(newGivenArr);
+        }
+      }
+      // backspace or delete
+      else if (e.keyCode === 8 || e.keyCode === 46) {
+        newArr[row][col] = 0;
+
+        // deleting given numbers when setting given
+        if (inputGiven) {
+          const newGivenArr = copyArr(givenArr);
+          newGivenArr[row][col] = false;
+          setGivenArr(newGivenArr);
+        }
+      }
 
       setValueArr(newArr);
     }
@@ -88,6 +142,7 @@ function App() {
             value={valueArr[data.row][data.col]}
             corner={[]}
             center={[]}
+            given={givenArr[data.row][data.col]}
             onCellClick={handleCellClick}
             focus={focus[0] === data.row && focus[1] === data.col}
           ></Cell>
@@ -119,6 +174,15 @@ function App() {
       <main className="main prevent-select">
         <article className="board" tabIndex="0" onKeyDown={handleKeyDown}>
           {createBoard()}
+        </article>
+        <article className="controls">
+          <h1>Controls</h1>
+          <button className="button" onClick={() => setInputGiven(!inputGiven)}>
+            {inputGiven ? "Stop Setting Given" : "Set Given"}
+          </button>{" "}
+          <button className="button" onClick={() => setMode((mode + 1) % 2)}>
+            {mode === 0 ? "Pen" : "Pencil"}
+          </button>
         </article>
       </main>
       <footer>

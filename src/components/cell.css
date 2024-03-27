@@ -2,10 +2,12 @@
     min-width: 4rem;
     min-height: 4rem;
 
-    padding: 1rem;
+    padding: 0.3rem;
+
     border: 1px solid black;
 
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 
@@ -18,9 +20,16 @@
     filter: brightness(1.2);
 }
 
-.cell--focus {
-    background: red;
+.cell__pencil {
+    width: 100%;
+    height: calc(100% / 3);
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
+
+
 
 .cell--solved {
     width: 100%;
@@ -33,5 +42,13 @@
     font-weight: 700;
 
     position: absolute;
-    background: green;
+    background: white;
+}
+
+.cell--given {
+    background: gray;
+}
+
+.cell--focus {
+    background: red;
 }
