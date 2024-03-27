@@ -1,7 +1,9 @@
 /* general */
 
 .button {
-
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid black;
 }
 
 .button:hover {
@@ -30,10 +32,24 @@
   border: 2px solid black;
 }
 
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .box {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
 
   border: 2px solid black;
+}
+
+.button--unsolved {
+  background: red;
+}
+
+.button--solved {
+  background: green;
 }

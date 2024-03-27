@@ -13,12 +13,15 @@ function App() {
   const [valueArr, setValueArr] = useState(
     Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0))
   );
+  const [cornerArr, setCornerArr] = useState(createBlankBoardArr());
+  const [centerArr, setCenterArr] = useState(createBlankBoardArr());
   const [givenArr, setGivenArr] = useState(
     Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(false))
   );
   const [inputGiven, setInputGiven] = useState(false);
   // 0 = pen, 1 = corner marking
   const [mode, setMode] = useState(0);
+  const [solved, setSolved] = useState(false);
 
   // board data
   const data__board = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
@@ -54,6 +57,12 @@ function App() {
   const handleCellClick = (row, col) => {
     console.log("handling cell click", row, col);
 
+    // if we click on the same cell -> remove focus
+    if (focus[0] === row && focus[1] === col) {
+      setFocus([-1, -1]);
+      return;
+    }
+
     setFocus([row, col]);
   };
 
@@ -83,35 +92,70 @@ function App() {
       return;
     }
 
+    // space bar: change modes
+    if (e.keyCode === 32) {
+      setMode((mode + 1) % 2);
+    }
+
     // if focus exists, overwrite the focus cell
     if (row >= 0 && col >= 0) {
       // if we are trying to overwrite a given number and we are not setting given: dont let it
       if (givenArr[row][col] && !inputGiven) {
-        console.log("cannot overwrite given number");
+        console.log("cannot overwrite a given number");
         return;
       }
 
-      console.log("writing to", row, col);
-
-      console.log("value", e.keyCode - 49 + 1);
-
-      // write to value array
-      const newArr = copyArr(valueArr);
-
       // valid 1 - 9
       if (49 <= e.keyCode && e.keyCode <= 57) {
-        newArr[row][col] = e.keyCode - 49 + 1;
+        const num = e.keyCode - 49 + 1;
 
-        // inputting given numbers wehn setting given
+        // inputting given numbers when setting given
         if (inputGiven) {
+          // set given number
+          const newArr = copyArr(valueArr);
+          newArr[row][col] = num;
+          setValueArr(newArr);
+
+          // set given flag
           const newGivenArr = copyArr(givenArr);
           newGivenArr[row][col] = true;
           setGivenArr(newGivenArr);
+          return;
+        }
+
+        // mode 0: pen
+        if (mode === 0) {
+          const newArr = copyArr(valueArr);
+          newArr[row][col] = num;
+          setValueArr(newArr);
+        }
+        // mode 1: pencil: corner
+        else if (mode === 1) {
+          const newArr = copyArr(cornerArr);
+
+          // includes? remove the number
+          if (cornerArr[row][col].includes(num)) {
+            newArr[row][col] = newArr[row][col].filter(
+              (arrNum) => arrNum !== num
+            );
+            setCornerArr(newArr);
+          }
+          // does not include -> add the number
+          else {
+            newArr[row][col].push(num);
+            newArr[row][col].sort((a, b) => a - b);
+            setCornerArr(newArr);
+          }
         }
       }
+
       // backspace or delete
       else if (e.keyCode === 8 || e.keyCode === 46) {
-        newArr[row][col] = 0;
+        if (mode === 0) {
+          const newArr = copyArr(valueArr);
+          newArr[row][col] = 0;
+          setValueArr(newArr);
+        }
 
         // deleting given numbers when setting given
         if (inputGiven) {
@@ -120,9 +164,16 @@ function App() {
           setGivenArr(newGivenArr);
         }
       }
-
-      setValueArr(newArr);
     }
+  };
+
+  const handleClear = () => {
+    setFocus([-1, -1]);
+    setValueArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0)));
+    setCornerArr(createBlankBoardArr());
+    setCenterArr(createBlankBoardArr());
+    setMode(0);
+    setSolved(false);
   };
 
   // helper function: create the board from cell components
@@ -140,8 +191,8 @@ function App() {
             key={`cell_R${data.row}_C${data.col}`}
             data={data}
             value={valueArr[data.row][data.col]}
-            corner={[]}
-            center={[]}
+            corner={cornerArr[data.row][data.col]}
+            center={centerArr[data.row][data.col]}
             given={givenArr[data.row][data.col]}
             onCellClick={handleCellClick}
             focus={focus[0] === data.row && focus[1] === data.col}
@@ -159,6 +210,19 @@ function App() {
     });
   };
 
+  // helper function: create 2d array of ararys
+  function createBlankBoardArr() {
+    const arr = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
+
+    for (let row = 0; row < MAX_ROW; row++) {
+      for (let col = 0; col < MAX_COL; col++) {
+        arr[row][col] = [];
+      }
+    }
+
+    return arr;
+  }
+
   useEffect(() => {
     // fetch data
   }, []);
@@ -171,8 +235,12 @@ function App() {
           <p>A sudoku tool.</p>
         </hgroup>
       </header>
-      <main className="main prevent-select">
-        <article className="board" tabIndex="0" onKeyDown={handleKeyDown}>
+      <main className="main">
+        <article
+          className="board prevent-select"
+          tabIndex="0"
+          onKeyDown={handleKeyDown}
+        >
           {createBoard()}
         </article>
         <article className="controls">
@@ -182,6 +250,17 @@ function App() {
           </button>{" "}
           <button className="button" onClick={() => setMode((mode + 1) % 2)}>
             {mode === 0 ? "Pen" : "Pencil"}
+          </button>
+          <button
+            className={
+              "button" + (solved ? " button--solved" : " button--unsolved")
+            }
+            onClick={() => setSolved(SudokuLibrary.checkSolved(valueArr))}
+          >
+            Check Solved
+          </button>
+          <button className="button" onClick={() => handleClear()}>
+            Clear
           </button>
         </article>
       </main>
