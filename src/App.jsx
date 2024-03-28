@@ -125,63 +125,52 @@ function App() {
           return;
         }
 
-        // mode 1: pencil: corner
-        if (mode === 1 || e.shiftKey) {
-          const newArr = copyArr(cornerArr);
-
-          // includes? remove the number
-          if (cornerArr[row][col].includes(num)) {
-            newArr[row][col] = newArr[row][col].filter(
-              (arrNum) => arrNum !== num
-            );
-            setCornerArr(newArr);
-          }
-          // does not include -> add the number
-          else {
-            newArr[row][col].push(num);
-            newArr[row][col].sort((a, b) => a - b);
-            setCornerArr(newArr);
-          }
+        // shift key -> corner
+        if (e.shiftKey) {
+          setCorner(row, col, num);
         }
-        // mode 0: pen
+        // ctrl key -> center
+        else if (e.ctrlKey) {
+          setCenter(row, col, num);
+        }
+        // mode 1: pencil: corner
+        else if (mode === 1) {
+          setCorner(row, col, num);
+        }
+        // mode 2: pencil: center -> ctrl key
+        else if (mode === 2) {
+          setCenter(row, col, num);
+        }
+        // mode 0: pen -> no modifier key
         else if (mode === 0) {
           const newArr = copyArr(valueArr);
           newArr[row][col] = num;
           setValueArr(newArr);
-        } else if (mode === 2) {
-          const newArr = copyArr(centerArr);
-
-          // includes? remove the number
-          if (centerArr[row][col].includes(num)) {
-            newArr[row][col] = newArr[row][col].filter(
-              (arrNum) => arrNum !== num
-            );
-            setCenterArr(newArr);
-          }
-          // does not include -> add the number
-          else {
-            newArr[row][col].push(num);
-            newArr[row][col].sort((a, b) => a - b);
-            setCenterArr(newArr);
-          }
         }
       }
       // backspace or delete
       else if (e.keyCode === 8 || e.keyCode === 46) {
-        if (valueArr[row][col] !== 0) {
+        // using shift -> corner marking delete
+        if (e.shiftKey) {
+          deleteCorner(row, col);
+        }
+        // using ctrl -> center marking delete
+        else if (e.ctrlKey) {
+          deleteCenter(row, col);
+        }
+        // mode 0: pen
+        else if (mode === 0) {
           const newArr = copyArr(valueArr);
           newArr[row][col] = 0;
           setValueArr(newArr);
-        } else {
-          if (mode === 2) {
-            const newArr = copyArr(centerArr);
-            newArr[row][col].pop();
-            setCenterArr(newArr);
-          } else {
-            const newArr = copyArr(cornerArr);
-            newArr[row][col].pop();
-            setCornerArr(newArr);
-          }
+        }
+        // mode 1: pencil -> corner
+        else if (mode === 1) {
+          deleteCorner(row, col);
+        }
+        // mode 2: pencil -> center
+        else if (mode === 2) {
+          deleteCenter(row, col);
         }
 
         // deleting given numbers when setting given
@@ -199,6 +188,7 @@ function App() {
     setValueArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0)));
     setCornerArr(createBlankBoardArr());
     setCenterArr(createBlankBoardArr());
+    setGivenArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(false)));
     setMode(0);
     setSolved(false);
   };
@@ -248,6 +238,54 @@ function App() {
     }
 
     return arr;
+  }
+
+  // helper function: fill in center
+  function setCenter(row, col, num) {
+    const newArr = copyArr(centerArr);
+
+    // includes? remove the number
+    if (centerArr[row][col].includes(num)) {
+      newArr[row][col] = newArr[row][col].filter((arrNum) => arrNum !== num);
+      setCenterArr(newArr);
+    }
+    // does not include -> add the number
+    else {
+      newArr[row][col].push(num);
+      newArr[row][col].sort((a, b) => a - b);
+      setCenterArr(newArr);
+    }
+  }
+
+  // helper function: fill in corner
+  function setCorner(row, col, num) {
+    const newArr = copyArr(cornerArr);
+
+    // includes? remove the number
+    if (cornerArr[row][col].includes(num)) {
+      newArr[row][col] = newArr[row][col].filter((arrNum) => arrNum !== num);
+      setCornerArr(newArr);
+    }
+    // does not include -> add the number
+    else {
+      newArr[row][col].push(num);
+      newArr[row][col].sort((a, b) => a - b);
+      setCornerArr(newArr);
+    }
+  }
+
+  // delete from center
+  function deleteCenter(row, col) {
+    const newArr = copyArr(centerArr);
+    newArr[row][col].pop();
+    setCenterArr(newArr);
+  }
+
+  // delete from corner
+  function deleteCorner(row, col) {
+    const newArr = copyArr(cornerArr);
+    newArr[row][col].pop();
+    setCornerArr(newArr);
   }
 
   // helper function: calculate next mode
