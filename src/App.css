@@ -47,7 +47,7 @@
 }
 
 .button--unsolved {
-  background: red;
+  background: var(--clr--error);
 }
 
 .button--solved {

@@ -1,5 +1,13 @@
 :root {
   /* colors */
+  --clr--given: #C8C6AF;
+  --clr--bg: #E9EDDE;
+  --clr--black: #020100;
+  --clr--error: #C73E1D;
+  --clr--focus: #B2ABF2;
+
+  /* font */
+  --font--body: "Albert Sans", sans-serif;
 }
 
 *, *::before, *::after {
@@ -9,11 +17,17 @@
 
 html {
   box-sizing: border-box;
+
+  /* general font */
+  font-family: var(--font--body);
+  font-size: 16px;
+  font-weight: 400;
 }
 
 body {
   min-height: 100vh;
   min-height: 100svh;
+  background: var(--clr--bg);
 }
 
 #root {

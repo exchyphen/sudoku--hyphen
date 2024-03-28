@@ -1,6 +1,6 @@
 .cell {
-    min-width: 4rem;
-    min-height: 4rem;
+    min-width: 5rem;
+    min-height: 5rem;
 
     padding: 0.3rem;
 
@@ -15,8 +15,6 @@
 }
 
 .cell:hover {
-    cursor: pointer;
-    background: orange;
     filter: brightness(1.2);
 }
 
@@ -29,6 +27,9 @@
     align-items: center;
 }
 
+.pencil--center {
+    justify-content: center;
+}
 
 
 .cell--solved {
@@ -46,9 +47,9 @@
 }
 
 .cell--given {
-    background: gray;
+    background: var(--clr--given);
 }
 
 .cell--focus {
-    background: red;
+    background: var(--clr--focus);
 }

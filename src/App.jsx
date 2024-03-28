@@ -67,7 +67,9 @@ function App() {
   };
 
   const handleKeyDown = (e) => {
+    console.log("key press summary");
     console.log("key pressed", e.keyCode);
+    console.log("shift is pressed", e.shiftKey);
     const [row, col] = focus;
 
     // arrow keys or wasd
@@ -94,7 +96,7 @@ function App() {
 
     // space bar: change modes
     if (e.keyCode === 32) {
-      setMode((mode + 1) % 2);
+      setMode(nextMode());
     }
 
     // if focus exists, overwrite the focus cell
@@ -123,14 +125,8 @@ function App() {
           return;
         }
 
-        // mode 0: pen
-        if (mode === 0) {
-          const newArr = copyArr(valueArr);
-          newArr[row][col] = num;
-          setValueArr(newArr);
-        }
         // mode 1: pencil: corner
-        else if (mode === 1) {
+        if (mode === 1 || e.shiftKey) {
           const newArr = copyArr(cornerArr);
 
           // includes? remove the number
@@ -147,14 +143,45 @@ function App() {
             setCornerArr(newArr);
           }
         }
-      }
+        // mode 0: pen
+        else if (mode === 0) {
+          const newArr = copyArr(valueArr);
+          newArr[row][col] = num;
+          setValueArr(newArr);
+        } else if (mode === 2) {
+          const newArr = copyArr(centerArr);
 
+          // includes? remove the number
+          if (centerArr[row][col].includes(num)) {
+            newArr[row][col] = newArr[row][col].filter(
+              (arrNum) => arrNum !== num
+            );
+            setCenterArr(newArr);
+          }
+          // does not include -> add the number
+          else {
+            newArr[row][col].push(num);
+            newArr[row][col].sort((a, b) => a - b);
+            setCenterArr(newArr);
+          }
+        }
+      }
       // backspace or delete
       else if (e.keyCode === 8 || e.keyCode === 46) {
-        if (mode === 0) {
+        if (valueArr[row][col] !== 0) {
           const newArr = copyArr(valueArr);
           newArr[row][col] = 0;
           setValueArr(newArr);
+        } else {
+          if (mode === 2) {
+            const newArr = copyArr(centerArr);
+            newArr[row][col].pop();
+            setCenterArr(newArr);
+          } else {
+            const newArr = copyArr(cornerArr);
+            newArr[row][col].pop();
+            setCornerArr(newArr);
+          }
         }
 
         // deleting given numbers when setting given
@@ -223,6 +250,27 @@ function App() {
     return arr;
   }
 
+  // helper function: calculate next mode
+  const nextMode = () => {
+    return (mode + 1) % 3; // mod total modes
+  };
+
+  // helper function: determine what to display as a button for mode
+  const modeLabel = () => {
+    if (mode === 0) {
+      return "Pen";
+    }
+
+    if (mode === 1) {
+      return "Corner";
+    }
+
+    if (mode === 2) {
+      return "Center";
+    }
+  };
+
+  // initial load
   useEffect(() => {
     // fetch data
   }, []);
@@ -248,8 +296,8 @@ function App() {
           <button className="button" onClick={() => setInputGiven(!inputGiven)}>
             {inputGiven ? "Stop Setting Given" : "Set Given"}
           </button>{" "}
-          <button className="button" onClick={() => setMode((mode + 1) % 2)}>
-            {mode === 0 ? "Pen" : "Pencil"}
+          <button className="button" onClick={() => setMode(nextMode())}>
+            {modeLabel()}
           </button>
           <button
             className={
