@@ -154,7 +154,7 @@ function App() {
         }
 
         // set the changes all at once
-        if (e.shitKey) {
+        if (e.shiftKey) {
           setCornerArr(newArr);
         } else if (e.ctrlKey) {
           setCenterArr(newArr);
@@ -203,7 +203,7 @@ function App() {
         }
 
         // set the changes all at once
-        if (e.shitKey) {
+        if (e.shiftKey) {
           setCornerArr(newArr);
         } else if (e.ctrlKey) {
           setCenterArr(newArr);
