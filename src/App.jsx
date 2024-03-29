@@ -138,10 +138,28 @@ function App() {
 
       // backspace or delete
       if (e.keyCode === 8 || e.keyCode === 46) {
+        let newArr;
+        if (e.shiftKey) {
+          newArr = copyArr(cornerArr);
+        } else if (e.ctrlKey) {
+          newArr = copyArr(centerArr);
+        } else {
+          newArr = copyArr(valueArr);
+        }
+
         for (const index of focus) {
           const [row, col] = convert1dTo2d(index);
           console.log("deleting", row, col);
-          handleDelete(row, col, e.shiftKey, e.ctrlKey);
+          handleDelete(row, col, e.shiftKey, e.ctrlKey, newArr);
+        }
+
+        // set the changes all at once
+        if (e.shitKey) {
+          setCornerArr(newArr);
+        } else if (e.ctrlKey) {
+          setCenterArr(newArr);
+        } else {
+          setValueArr(newArr);
         }
       }
 
@@ -152,14 +170,45 @@ function App() {
       // valid 1 - 9
       else if (49 <= e.keyCode && e.keyCode <= 57) {
         const num = e.keyCode - 49 + 1;
+
+        // create new arr
+        let newArr;
+        if (e.shiftKey) {
+          newArr = copyArr(cornerArr);
+        } else if (e.ctrlKey) {
+          newArr = copyArr(centerArr);
+        } else {
+          newArr = copyArr(valueArr);
+        }
+
         // check if all focus already has that number
+        let deleteOnly = false;
         if (checkFocusCells(num, e.shiftKey, e.ctrlKey)) {
           // remove number from cells
-          handleNumberInput(row, col, num, e.shiftKey, e.ctrlKey);
+          deleteOnly = true;
         }
         // if some cells do not have this number
-        else {
-          handleNumberInput(row, col, num, e.shiftKey, e.ctrlKey);
+        for (const index of focus) {
+          const [row, col] = convert1dTo2d(index);
+
+          handleNumberInput(
+            row,
+            col,
+            num,
+            e.shiftKey,
+            e.ctrlKey,
+            newArr,
+            deleteOnly
+          );
+        }
+
+        // set the changes all at once
+        if (e.shitKey) {
+          setCornerArr(newArr);
+        } else if (e.ctrlKey) {
+          setCenterArr(newArr);
+        } else {
+          setValueArr(newArr);
         }
       }
     }
@@ -223,33 +272,40 @@ function App() {
   };
 
   // function: handle delete
-  const handleDelete = (row, col, shiftKey, ctrlKey) => {
+  const handleDelete = (row, col, shiftKey, ctrlKey, newArr) => {
     // using shift -> corner marking delete
     if (shiftKey) {
-      deleteCorner(row, col);
+      deleteCorner(row, col, newArr);
     }
     // using ctrl -> center marking delete
     else if (ctrlKey) {
-      deleteCenter(row, col);
+      deleteCenter(row, col, newArr);
     }
     // mode 0: pen
     else if (mode === 0) {
-      const newArr = copyArr(valueArr);
       newArr[row][col] = 0;
       setValueArr(newArr);
     }
     // mode 1: pencil -> corner
     else if (mode === 1) {
-      deleteCorner(row, col);
+      deleteCorner(row, col, newArr);
     }
     // mode 2: pencil -> center
     else if (mode === 2) {
-      deleteCenter(row, col);
+      deleteCenter(row, col, newArr);
     }
   };
 
   // function: handle number input
-  const handleNumberInput = (row, col, num, shiftKey, ctrlKey) => {
+  const handleNumberInput = (
+    row,
+    col,
+    num,
+    shiftKey,
+    ctrlKey,
+    newArr,
+    deleteOnly
+  ) => {
     // if given cell is a given, do nothing
     if (givenArr[row][col]) {
       return;
@@ -257,25 +313,23 @@ function App() {
 
     // shift key -> corner
     if (shiftKey) {
-      setCorner(row, col, num);
+      setCorner(row, col, num, newArr, deleteOnly);
     }
     // ctrl key -> center
     else if (ctrlKey) {
-      setCenter(row, col, num);
+      setCenter(row, col, num, newArr, deleteOnly);
     }
     // mode 1: pencil: corner
     else if (mode === 1) {
-      setCorner(row, col, num);
+      setCorner(row, col, num, newArr, deleteOnly);
     }
     // mode 2: pencil: center -> ctrl key
     else if (mode === 2) {
-      setCenter(row, col, num);
+      setCenter(row, col, num, newArr, deleteOnly);
     }
     // mode 0: pen -> no modifier key
     else if (mode === 0) {
-      const newArr = copyArr(valueArr);
       newArr[row][col] = num;
-      setValueArr(newArr);
     }
   };
 
@@ -357,51 +411,43 @@ function App() {
   }
 
   // helper function: fill in center
-  const setCenter = (row, col, num) => {
-    const newArr = copyArr(centerArr);
-
+  const setCenter = (row, col, num, newArr, deleteOnly) => {
     // includes? remove the number
     if (centerArr[row][col].includes(num)) {
-      newArr[row][col] = newArr[row][col].filter((arrNum) => arrNum !== num);
-      setCenterArr(newArr);
+      if (deleteOnly) {
+        newArr[row][col] = newArr[row][col].filter((arrNum) => arrNum !== num);
+      }
     }
     // does not include -> add the number
     else {
       newArr[row][col].push(num);
       newArr[row][col].sort((a, b) => a - b);
-      setCenterArr(newArr);
     }
   };
 
   // helper function: fill in corner
-  const setCorner = (row, col, num) => {
-    const newArr = copyArr(cornerArr);
-
+  const setCorner = (row, col, num, newArr, deleteOnly) => {
     // includes? remove the number
     if (cornerArr[row][col].includes(num)) {
-      newArr[row][col] = newArr[row][col].filter((arrNum) => arrNum !== num);
-      setCornerArr(newArr);
+      if (deleteOnly) {
+        newArr[row][col] = newArr[row][col].filter((arrNum) => arrNum !== num);
+      }
     }
     // does not include -> add the number
     else {
       newArr[row][col].push(num);
       newArr[row][col].sort((a, b) => a - b);
-      setCornerArr(newArr);
     }
   };
 
   // delete from center
-  const deleteCenter = (row, col) => {
-    const newArr = copyArr(centerArr);
+  const deleteCenter = (row, col, newArr) => {
     newArr[row][col].pop();
-    setCenterArr(newArr);
   };
 
   // delete from corner
-  const deleteCorner = (row, col) => {
-    const newArr = copyArr(cornerArr);
+  const deleteCorner = (row, col, newArr) => {
     newArr[row][col].pop();
-    setCornerArr(newArr);
   };
 
   // helper function: calculate next mode
