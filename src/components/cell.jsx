@@ -16,6 +16,7 @@ const Cell = (props) => {
 
     if (e.buttons === 1) {
       console.log("mouse entered cell", data.row, data.col);
+      props.onCellDrag(data.row, data.col, true);
     }
   };
 

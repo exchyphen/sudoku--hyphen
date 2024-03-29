@@ -128,91 +128,156 @@ function App() {
       return;
     }
 
-    // if focus exists, overwrite the focus cell
-    if (row >= 0 && col >= 0) {
-      // if we are trying to overwrite a given number and we are not setting given: dont let it
-      if (givenArr[row][col] && !inputGiven) {
-        console.log("cannot overwrite a given number");
-        return;
-      }
+    // if there is at least one focus
+    if (focus.size > 0) {
+      console.log("entered writing to focus");
 
-      // valid 1 - 9
-      if (49 <= e.keyCode && e.keyCode <= 57) {
-        const num = e.keyCode - 49 + 1;
+      // if already has -> remove from all
 
-        // inputting given numbers when setting given
-        if (inputGiven) {
-          // set given number
-          const newArr = copyArr(valueArr);
-          newArr[row][col] = num;
-          setValueArr(newArr);
+      // if not -> add to all, do not remove any existing
 
-          // set given flag
-          const newGivenArr = copyArr(givenArr);
-          newGivenArr[row][col] = true;
-          setGivenArr(newGivenArr);
-          return;
-        }
-
-        // shift key -> corner
-        if (e.shiftKey) {
-          setCorner(row, col, num);
-        }
-        // ctrl key -> center
-        else if (e.ctrlKey) {
-          setCenter(row, col, num);
-        }
-        // mode 1: pencil: corner
-        else if (mode === 1) {
-          setCorner(row, col, num);
-        }
-        // mode 2: pencil: center -> ctrl key
-        else if (mode === 2) {
-          setCenter(row, col, num);
-        }
-        // mode 0: pen -> no modifier key
-        else if (mode === 0) {
-          const newArr = copyArr(valueArr);
-          newArr[row][col] = num;
-          setValueArr(newArr);
-        }
-      }
       // backspace or delete
-      else if (e.keyCode === 8 || e.keyCode === 46) {
-        // using shift -> corner marking delete
-        if (e.shiftKey) {
-          deleteCorner(row, col);
+      if (e.keyCode === 8 || e.keyCode === 46) {
+        for (const index of focus) {
+          const [row, col] = convert1dTo2d(index);
+          console.log("deleting", row, col);
+          handleDelete(row, col, e.shiftKey, e.ctrlKey);
         }
-        // using ctrl -> center marking delete
-        else if (e.ctrlKey) {
-          deleteCenter(row, col);
-        }
-        // mode 0: pen
-        else if (mode === 0) {
-          const newArr = copyArr(valueArr);
-          newArr[row][col] = 0;
-          setValueArr(newArr);
-        }
-        // mode 1: pencil -> corner
-        else if (mode === 1) {
-          deleteCorner(row, col);
-        }
-        // mode 2: pencil -> center
-        else if (mode === 2) {
-          deleteCenter(row, col);
-        }
+      }
 
-        // deleting given numbers when setting given
-        if (inputGiven) {
-          const newGivenArr = copyArr(givenArr);
-          newGivenArr[row][col] = false;
-          setGivenArr(newGivenArr);
+      // handle given input
+      if (inputGiven) {
+        handleGivenInput(row, col, e.keyCode);
+      }
+      // valid 1 - 9
+      else if (49 <= e.keyCode && e.keyCode <= 57) {
+        const num = e.keyCode - 49 + 1;
+        // check if all focus already has that number
+        if (checkFocusCells(num, e.shiftKey, e.ctrlKey)) {
+          // remove number from cells
+          handleNumberInput(row, col, num, e.shiftKey, e.ctrlKey);
+        }
+        // if some cells do not have this number
+        else {
+          handleNumberInput(row, col, num, e.shiftKey, e.ctrlKey);
         }
       }
     }
   };
 
-  // function: handle valid keypress
+  // function: check if the current relavent values have the given number
+  // if at any point a given cell does not have that number, return false
+  const checkFocusCells = (num, shiftKey, ctrlKey) => {
+    for (const index of focus) {
+      const [row, col] = convert1dTo2d(index);
+      if (shiftKey) {
+        if (!cornerArr[row][col].includes(num)) {
+          return false;
+        }
+      } else if (ctrlKey) {
+        if (!centerArr[row][col].includes(num)) {
+          return false;
+        }
+      } else {
+        if (valueArr[row][col] !== num) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
+  // function: handle given input
+  const handleGivenInput = (row, col, keyCode) => {
+    // not in setting input mode
+    if (!inputGiven) {
+      return;
+    }
+
+    // no valid focus
+    if (row < 0 || col < 0) {
+      return;
+    }
+
+    // number 1 - 9
+    if (49 <= keyCode && keyCode <= 57) {
+      const num = keyCode - 49 + 1;
+
+      // set given number
+      const newArr = copyArr(valueArr);
+      newArr[row][col] = num;
+      setValueArr(newArr);
+
+      // set given flag
+      const newGivenArr = copyArr(givenArr);
+      newGivenArr[row][col] = true;
+      setGivenArr(newGivenArr);
+    }
+    // delete or backspace
+    else if (keyCode === 8 || keyCode === 46) {
+      const newGivenArr = copyArr(givenArr);
+      newGivenArr[row][col] = false;
+      setGivenArr(newGivenArr);
+    }
+  };
+
+  // function: handle delete
+  const handleDelete = (row, col, shiftKey, ctrlKey) => {
+    // using shift -> corner marking delete
+    if (shiftKey) {
+      deleteCorner(row, col);
+    }
+    // using ctrl -> center marking delete
+    else if (ctrlKey) {
+      deleteCenter(row, col);
+    }
+    // mode 0: pen
+    else if (mode === 0) {
+      const newArr = copyArr(valueArr);
+      newArr[row][col] = 0;
+      setValueArr(newArr);
+    }
+    // mode 1: pencil -> corner
+    else if (mode === 1) {
+      deleteCorner(row, col);
+    }
+    // mode 2: pencil -> center
+    else if (mode === 2) {
+      deleteCenter(row, col);
+    }
+  };
+
+  // function: handle number input
+  const handleNumberInput = (row, col, num, shiftKey, ctrlKey) => {
+    // if given cell is a given, do nothing
+    if (givenArr[row][col]) {
+      return;
+    }
+
+    // shift key -> corner
+    if (shiftKey) {
+      setCorner(row, col, num);
+    }
+    // ctrl key -> center
+    else if (ctrlKey) {
+      setCenter(row, col, num);
+    }
+    // mode 1: pencil: corner
+    else if (mode === 1) {
+      setCorner(row, col, num);
+    }
+    // mode 2: pencil: center -> ctrl key
+    else if (mode === 2) {
+      setCenter(row, col, num);
+    }
+    // mode 0: pen -> no modifier key
+    else if (mode === 0) {
+      const newArr = copyArr(valueArr);
+      newArr[row][col] = num;
+      setValueArr(newArr);
+    }
+  };
 
   const handleClear = () => {
     setFocus(new Set());
@@ -225,7 +290,7 @@ function App() {
   };
 
   // helper function: add to focus
-  function addToFocus(row, col, mod) {
+  const addToFocus = (row, col, mod) => {
     if (row < 0 || col < 0) {
       addToFocus(0, 0);
       return;
@@ -241,7 +306,7 @@ function App() {
 
     // add to last used focus
     setLastFocus([row, col]);
-  }
+  };
 
   // helper function: create the board from cell components
   const createBoard = () => {
@@ -262,6 +327,7 @@ function App() {
             center={centerArr[data.row][data.col]}
             given={givenArr[data.row][data.col]}
             onCellClick={handleCellClick}
+            onCellDrag={addToFocus}
             focus={focus.has(convert2dTo1d(data.row, data.col))}
           ></Cell>
         );
@@ -291,7 +357,7 @@ function App() {
   }
 
   // helper function: fill in center
-  function setCenter(row, col, num) {
+  const setCenter = (row, col, num) => {
     const newArr = copyArr(centerArr);
 
     // includes? remove the number
@@ -305,10 +371,10 @@ function App() {
       newArr[row][col].sort((a, b) => a - b);
       setCenterArr(newArr);
     }
-  }
+  };
 
   // helper function: fill in corner
-  function setCorner(row, col, num) {
+  const setCorner = (row, col, num) => {
     const newArr = copyArr(cornerArr);
 
     // includes? remove the number
@@ -322,21 +388,21 @@ function App() {
       newArr[row][col].sort((a, b) => a - b);
       setCornerArr(newArr);
     }
-  }
+  };
 
   // delete from center
-  function deleteCenter(row, col) {
+  const deleteCenter = (row, col) => {
     const newArr = copyArr(centerArr);
     newArr[row][col].pop();
     setCenterArr(newArr);
-  }
+  };
 
   // delete from corner
-  function deleteCorner(row, col) {
+  const deleteCorner = (row, col) => {
     const newArr = copyArr(cornerArr);
     newArr[row][col].pop();
     setCornerArr(newArr);
-  }
+  };
 
   // helper function: calculate next mode
   const nextMode = () => {
@@ -344,14 +410,14 @@ function App() {
   };
 
   // helper function: convert 2d coord to a 1d index
-  function convert2dTo1d(row, col) {
+  const convert2dTo1d = (row, col) => {
     return row * MAX_COL + col;
-  }
+  };
 
   // helper function: convert 1d coord to 2d index
-  function convert1dTo2d(index) {
+  const convert1dTo2d = (index) => {
     return [Math.trunc(index / MAX_COL), index % MAX_COL];
-  }
+  };
 
   // helper function: determine what to display as a button for mode
   const modeLabel = () => {
@@ -368,10 +434,24 @@ function App() {
     }
   };
 
+  // helper function: set board from dosuku api
+  const handleFetch = () => {
+    handleClear();
+
+    fetch(
+      "https://sudoku-api.vercel.app/api/dosuku?query={newboard(limit:1){grids{value}}}"
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        const board = data.newboard.grids[0].value;
+
+        setValueArr(copyArr(board));
+        setGivenArr(copyArr(board));
+      });
+  };
+
   // initial load
-  useEffect(() => {
-    // fetch data
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <>
@@ -408,6 +488,9 @@ function App() {
           </button>
           <button className="button" onClick={() => handleClear()}>
             Clear
+          </button>{" "}
+          <button className="button" onClick={() => handleFetch()}>
+            Get New Board
           </button>
         </article>
       </main>
