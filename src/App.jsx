@@ -9,7 +9,8 @@ function App() {
   const MAX_COL = 9;
 
   // states
-  const [focus, setFocus] = useState([-1, -1]);
+  const [focus, setFocus] = useState(new Set());
+  const [lastFocus, setLastFocus] = useState([-1, -1]);
   const [valueArr, setValueArr] = useState(
     Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0))
   );
@@ -22,6 +23,7 @@ function App() {
   // 0 = pen, 1 = corner marking
   const [mode, setMode] = useState(0);
   const [solved, setSolved] = useState(false);
+  const [modKey, setModKey] = useState("none");
 
   // board data
   const data__board = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
@@ -55,48 +57,75 @@ function App() {
 
   // handlers
   const handleCellClick = (row, col) => {
+    console.log("mod key", modKey);
+
     console.log("handling cell click", row, col);
+    // convert to 1d
+    const index = convert2dTo1d(row, col);
+    let newFocus;
 
     // if we click on the same cell -> remove focus
-    if (focus[0] === row && focus[1] === col) {
-      setFocus([-1, -1]);
-      return;
+    if (focus.has(index)) {
+      newFocus = new Set(focus);
+      newFocus.delete(index);
+    } else if (modKey !== "none") {
+      newFocus = new Set(focus);
+      newFocus.add(index);
+    } else {
+      newFocus = new Set();
+      newFocus.add(index);
     }
 
-    setFocus([row, col]);
+    setFocus(newFocus);
+    setLastFocus([row, col]);
   };
 
   const handleKeyDown = (e) => {
     console.log("key press summary");
     console.log("key pressed", e.keyCode);
-    console.log("shift is pressed", e.shiftKey);
-    const [row, col] = focus;
+    console.log("shift", e.shiftKey);
+    console.log("ctrl", e.ctrlKey);
 
-    // arrow keys or wasd
-    // left or a
-    if (e.keyCode === 37 || e.keyCode === 65) {
-      setFocus([row, Math.max(0, col - 1)]);
-      return;
+    // mod keys
+    if (e.shiftKey && modKey !== "shift") {
+      setModKey("shift");
     }
-    // right or d
-    if (e.keyCode === 39 || e.keyCode === 68) {
-      setFocus([row, Math.min(col + 1, MAX_COL - 1)]);
-      return;
+
+    if (e.ctrlKey && modKey !== "ctrl") {
+      setModKey("ctrl");
     }
-    // up or w
-    if (e.keyCode === 38 || e.keyCode === 87) {
-      setFocus([Math.max(0, row - 1), col]);
-      return;
-    }
-    // down or s
-    if (e.keyCode === 40 || e.keyCode === 83) {
-      setFocus([Math.min(row + 1, MAX_ROW - 1), col]);
-      return;
+
+    if (!e.shiftKey && !e.ctrlKey && modKey !== "none") {
+      setModKey("none");
     }
 
     // space bar: change modes
     if (e.keyCode === 32) {
       setMode(nextMode());
+    }
+
+    const [row, col] = lastFocus;
+
+    // arrow keys or wasd
+    // left or a
+    if (e.keyCode === 37 || e.keyCode === 65) {
+      addToFocus(row, Math.max(0, col - 1), e.shiftKey || e.ctrlKey);
+      return;
+    }
+    // right or d
+    if (e.keyCode === 39 || e.keyCode === 68) {
+      addToFocus(row, Math.min(col + 1, MAX_COL - 1), e.shiftKey || e.ctrlKey);
+      return;
+    }
+    // up or w
+    if (e.keyCode === 38 || e.keyCode === 87) {
+      addToFocus(Math.max(0, row - 1), col, e.shiftKey || e.ctrlKey);
+      return;
+    }
+    // down or s
+    if (e.keyCode === 40 || e.keyCode === 83) {
+      addToFocus(Math.min(row + 1, MAX_ROW - 1), col, e.shiftKey || e.ctrlKey);
+      return;
     }
 
     // if focus exists, overwrite the focus cell
@@ -183,8 +212,10 @@ function App() {
     }
   };
 
+  // function: handle valid keypress
+
   const handleClear = () => {
-    setFocus([-1, -1]);
+    setFocus(new Set());
     setValueArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0)));
     setCornerArr(createBlankBoardArr());
     setCenterArr(createBlankBoardArr());
@@ -192,6 +223,25 @@ function App() {
     setMode(0);
     setSolved(false);
   };
+
+  // helper function: add to focus
+  function addToFocus(row, col, mod) {
+    if (row < 0 || col < 0) {
+      addToFocus(0, 0);
+      return;
+    } else if (mod) {
+      const newFocus = new Set(focus);
+      newFocus.add(convert2dTo1d(row, col));
+      setFocus(newFocus);
+    } else {
+      const newFocus = new Set();
+      newFocus.add(convert2dTo1d(row, col));
+      setFocus(newFocus);
+    }
+
+    // add to last used focus
+    setLastFocus([row, col]);
+  }
 
   // helper function: create the board from cell components
   const createBoard = () => {
@@ -212,7 +262,7 @@ function App() {
             center={centerArr[data.row][data.col]}
             given={givenArr[data.row][data.col]}
             onCellClick={handleCellClick}
-            focus={focus[0] === data.row && focus[1] === data.col}
+            focus={focus.has(convert2dTo1d(data.row, data.col))}
           ></Cell>
         );
       }
@@ -293,6 +343,16 @@ function App() {
     return (mode + 1) % 3; // mod total modes
   };
 
+  // helper function: convert 2d coord to a 1d index
+  function convert2dTo1d(row, col) {
+    return row * MAX_COL + col;
+  }
+
+  // helper function: convert 1d coord to 2d index
+  function convert1dTo2d(index) {
+    return [Math.trunc(index / MAX_COL), index % MAX_COL];
+  }
+
   // helper function: determine what to display as a button for mode
   const modeLabel = () => {
     if (mode === 0) {
@@ -326,6 +386,7 @@ function App() {
           className="board prevent-select"
           tabIndex="0"
           onKeyDown={handleKeyDown}
+          onKeyUp={() => setModKey("none")}
         >
           {createBoard()}
         </article>

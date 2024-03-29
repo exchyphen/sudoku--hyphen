@@ -5,7 +5,7 @@ const Cell = (props) => {
   const data = props.data;
 
   // handlers
-  const handleClick = () => {
+  const handleMouseDown = () => {
     console.log("focus on", data.row, data.col);
 
     props.onCellClick(data.row, data.col);
@@ -26,8 +26,8 @@ const Cell = (props) => {
         (props.focus ? " cell--focus" : "") +
         (props.given ? " cell--given" : "")
       }
-      // onMouseEnter={handleMouseEnter}
-      onMouseDown={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseDown={handleMouseDown}
     >
       <div className="cell__pencil pencil--corner">
         {props.corner.slice(0, 4).map((data, index) => {
