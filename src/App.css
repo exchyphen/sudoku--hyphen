@@ -38,6 +38,11 @@
   gap: 1rem;
 }
 
+.time {
+  display: flex;
+  gap: 1rem;
+}
+
 .box {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

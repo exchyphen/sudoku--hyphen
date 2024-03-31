@@ -24,6 +24,8 @@ function App() {
   const [mode, setMode] = useState(0);
   const [solved, setSolved] = useState(false);
   const [modKey, setModKey] = useState("none");
+  const [baseTime, setBaseTime] = useState(Date.now());
+  const [elapsedTime, setElapsedTime] = useState(Date.now());
 
   // board data
   const data__board = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
@@ -496,8 +498,28 @@ function App() {
       });
   };
 
+  // help format numbers
+  const numberFormatter = (num) => {
+    return num.toLocaleString("en-US", {
+      minimumIntegerDigits: 2,
+      useGrouping: false,
+    });
+  };
+
   // initial load
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const timeInterval = setInterval(() => {
+      setElapsedTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timeInterval);
+  }, []);
+
+  useEffect(() => {
+    if (inputGiven === false) {
+      setBaseTime(Date.now());
+    }
+  }, [inputGiven]);
 
   return (
     <>
@@ -518,6 +540,18 @@ function App() {
         </article>
         <article className="controls">
           <h1>Controls</h1>
+          <section className="time">
+            <div className="time__title">Time</div>
+            <div>
+              {numberFormatter(
+                Math.trunc((elapsedTime - baseTime) / 1000 / 60)
+              )}
+              :
+              {numberFormatter(
+                Math.trunc((elapsedTime - baseTime) / 1000) % 60
+              )}
+            </div>
+          </section>
           <button className="button" onClick={() => setInputGiven(!inputGiven)}>
             {inputGiven ? "Stop Setting Given" : "Set Given"}
           </button>{" "}
