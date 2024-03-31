@@ -83,6 +83,8 @@ function App() {
   };
 
   const handleKeyDown = (e) => {
+    e.preventDefault();
+
     console.log("key press summary");
     console.log("key pressed", e.keyCode);
     console.log("shift", e.shiftKey);
