@@ -26,6 +26,7 @@ function App() {
   const [modKey, setModKey] = useState("none");
   const [baseTime, setBaseTime] = useState(Date.now());
   const [elapsedTime, setElapsedTime] = useState(Date.now());
+  const [difficulty, setDifficulty] = useState("none");
 
   // board data
   const data__board = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
@@ -337,14 +338,32 @@ function App() {
     }
   };
 
-  const handleClear = () => {
+  const handleClear = (clearGiven) => {
     setFocus(new Set());
-    setValueArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0)));
     setCornerArr(createBlankBoardArr());
     setCenterArr(createBlankBoardArr());
-    setGivenArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(false)));
     setMode(0);
     setSolved(false);
+
+    // give choice of clearing current puzzle givens or not
+    if (clearGiven) {
+      setValueArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0)));
+      setGivenArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(false)));
+    } else {
+      const newArr = copyArr(valueArr);
+
+      for (let row = 0; row < MAX_ROW; row++) {
+        for (let col = 0; col < MAX_COL; col++) {
+          if (!givenArr[row][col]) {
+            newArr[row][col] = 0;
+          }
+        }
+      }
+
+      setValueArr(newArr);
+    }
+
+    setBaseTime(Date.now());
   };
 
   // helper function: add to focus
@@ -471,25 +490,27 @@ function App() {
 
   // helper function: determine what to display as a button for mode
   const modeLabel = () => {
-    if (mode === 0) {
-      return "Pen";
-    }
-
-    if (mode === 1) {
+    // should include mode toggled by spacebar, or use of a modifier key (shift or ctrl)
+    if (mode === 1 || modKey === "shift") {
       return "Corner";
     }
 
-    if (mode === 2) {
+    if (mode === 2 || modKey === "ctrl") {
       return "Center";
     }
+
+    if (mode === 0) {
+      return "Pen";
+    }
+    return "Pen";
   };
 
   // helper function: set board from dosuku api
   const handleFetch = () => {
-    handleClear();
+    handleClear(true);
 
     fetch(
-      "https://sudoku-api.vercel.app/api/dosuku?query={newboard(limit:1){grids{value}}}"
+      "https://sudoku-api.vercel.app/api/dosuku?query={newboard(limit:1){grids{value,difficulty}}}"
     )
       .then((response) => response.json())
       .then((data) => {
@@ -497,6 +518,8 @@ function App() {
 
         setValueArr(copyArr(board));
         setGivenArr(copyArr(board));
+
+        setDifficulty(data.newboard.grids[0].difficulty);
       });
   };
 
@@ -568,12 +591,17 @@ function App() {
           >
             Check Solved
           </button>
-          <button className="button" onClick={() => handleClear()}>
-            Clear
-          </button>{" "}
+          <button className="button" onClick={() => handleClear(true)}>
+            Clear All
+          </button>
+          <button className="button" onClick={() => handleClear(false)}>
+            Clear Non-Given
+          </button>
+          <h2>Get New Board</h2>
           <button className="button" onClick={() => handleFetch()}>
             Get New Board
           </button>
+          <div>Current difficulty: {difficulty}</div>
         </article>
       </main>
       <footer>
