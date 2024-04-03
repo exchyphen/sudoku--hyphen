@@ -66,11 +66,12 @@ New random puzzles use Dosuku API.
 ## Upcoming Features
 
 1. Improved timer with pausing feature. Note if you pause, the board should be covered.
-2. More choices in getting random Sudoku puzzle (difficulty level choice)
-3. Different themes
-4. About button with descriptions on the controls.
-5. Dynamically change the mode button text based on modifier pressed.
-6. Different sizings (mobile!)
+2. Different themes
+3. About button with descriptions on the controls.
+4. Dynamically change the mode button text based on modifier pressed.
+5. Different sizings (mobile!)
+6. Error checking - though this should be more of an option for the user. Some users may want a harder difficulty with no error checking
+7. Sudoku generator. Currently Dosuku is fine, but would prefer to generate boards myself, preferably ones that have unique solutions and solvable via certain techniques.
 
 ## Created By
 
