@@ -2,21 +2,19 @@
 import "./cell.css";
 
 const Cell = (props) => {
-  const data = props.data;
-
   // handlers
   const handleMouseDown = () => {
-    console.log("focus on", data.row, data.col);
+    console.log("focus on", props.row, props.col);
 
-    props.onCellClick(data.row, data.col);
+    props.onCellClick(props.row, props.col);
   };
 
   const handleMouseEnter = (e) => {
     e.preventDefault();
 
     if (e.buttons === 1) {
-      console.log("mouse entered cell", data.row, data.col);
-      props.onCellDrag(data.row, data.col, true);
+      console.log("mouse entered cell", props.row, props.col);
+      props.onCellDrag(props.row, props.col, true);
     }
   };
 

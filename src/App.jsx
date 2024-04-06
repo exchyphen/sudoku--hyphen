@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import SudokuLibrary from "./SudokuLibrary.js";
+
+import { sudoku__findBox, sudoku__checkSolved } from "./utils/sudokuSolver.js";
+import {
+  copyArr,
+  convert1dTo2d,
+  convert2dTo1d,
+} from "./utils/generalFunctions.js";
+import { checkFocusCells, addToFocus } from "./utils/focus.js";
 
 import Cell from "./components/cell.jsx";
 
@@ -28,37 +35,10 @@ function App() {
   const [elapsedTime, setElapsedTime] = useState(Date.now());
   const [difficulty, setDifficulty] = useState("none");
 
-  // board data
-  const data__board = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
-  // initialize data board
-  for (let row = 0; row < MAX_ROW; row++) {
-    for (let col = 0; col < MAX_COL; col++) {
-      data__board[row][col] = {
-        row: row,
-        col: col,
-        box: SudokuLibrary.findBox(row, col),
-      };
-    }
-  }
-
   // helpful functions
 
-  // input: 2d array, output: deep copy of 2d array
-  const copyArr = (arr) => {
-    const newArr = Array.from(Array(arr.length), () =>
-      Array.from(arr[0].length)
-    );
-
-    for (let i = 0; i < arr.length; i++) {
-      for (let j = 0; j < arr[0].length; j++) {
-        newArr[i][j] = arr[i][j];
-      }
-    }
-
-    return newArr;
-  };
-
   // handlers
+  // handleCellClick: when cell is clicked, highlight the cell as focus cell
   const handleCellClick = (row, col) => {
     console.log("mod key", modKey);
 
@@ -83,6 +63,7 @@ function App() {
     setLastFocus([row, col]);
   };
 
+  // handleKeyDown: when key is pressed, handle the action to current set of focus
   const handleKeyDown = (e) => {
     e.preventDefault();
 
@@ -114,22 +95,22 @@ function App() {
     // arrow keys or wasd
     // left or a
     if (e.keyCode === 37 || e.keyCode === 65) {
-      addToFocus(row, Math.max(0, col - 1), e.shiftKey || e.ctrlKey);
+      handleFocus(row, Math.max(0, col - 1), e.shiftKey || e.ctrlKey);
       return;
     }
     // right or d
     if (e.keyCode === 39 || e.keyCode === 68) {
-      addToFocus(row, Math.min(col + 1, MAX_COL - 1), e.shiftKey || e.ctrlKey);
+      handleFocus(row, Math.min(col + 1, MAX_COL - 1), e.shiftKey || e.ctrlKey);
       return;
     }
     // up or w
     if (e.keyCode === 38 || e.keyCode === 87) {
-      addToFocus(Math.max(0, row - 1), col, e.shiftKey || e.ctrlKey);
+      handleFocus(Math.max(0, row - 1), col, e.shiftKey || e.ctrlKey);
       return;
     }
     // down or s
     if (e.keyCode === 40 || e.keyCode === 83) {
-      addToFocus(Math.min(row + 1, MAX_ROW - 1), col, e.shiftKey || e.ctrlKey);
+      handleFocus(Math.min(row + 1, MAX_ROW - 1), col, e.shiftKey || e.ctrlKey);
       return;
     }
 
@@ -188,7 +169,17 @@ function App() {
 
         // check if all focus already has that number
         let deleteOnly = false;
-        if (checkFocusCells(num, e.shiftKey, e.ctrlKey)) {
+        if (
+          checkFocusCells(
+            num,
+            e.shiftKey,
+            e.ctrlKey,
+            focus,
+            cornerArr,
+            centerArr,
+            valueArr
+          )
+        ) {
           // remove number from cells
           deleteOnly = true;
         }
@@ -219,30 +210,8 @@ function App() {
     }
   };
 
-  // function: check if the current relavent values have the given number
-  // if at any point a given cell does not have that number, return false
-  const checkFocusCells = (num, shiftKey, ctrlKey) => {
-    for (const index of focus) {
-      const [row, col] = convert1dTo2d(index);
-      if (shiftKey) {
-        if (!cornerArr[row][col].includes(num)) {
-          return false;
-        }
-      } else if (ctrlKey) {
-        if (!centerArr[row][col].includes(num)) {
-          return false;
-        }
-      } else {
-        if (valueArr[row][col] !== num) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  };
-
   // function: handle given input
+  // misnomer -> is not a handler. called from keydown event
   const handleGivenInput = (row, col, keyCode) => {
     // not in setting input mode
     if (!inputGiven) {
@@ -277,6 +246,7 @@ function App() {
   };
 
   // function: handle delete
+  // misnomer -> not a handler. called from keydown event
   const handleDelete = (row, col, shiftKey, ctrlKey, newArr) => {
     // using shift -> corner marking delete
     if (shiftKey) {
@@ -338,6 +308,7 @@ function App() {
     }
   };
 
+  // handler: when clear button is pressed
   const handleClear = (clearGiven) => {
     setFocus(new Set());
     setCornerArr(createBlankBoardArr());
@@ -366,23 +337,12 @@ function App() {
     setBaseTime(Date.now());
   };
 
-  // helper function: add to focus
-  const addToFocus = (row, col, mod) => {
-    if (row < 0 || col < 0) {
-      addToFocus(0, 0);
-      return;
-    } else if (mod) {
-      const newFocus = new Set(focus);
-      newFocus.add(convert2dTo1d(row, col));
-      setFocus(newFocus);
-    } else {
-      const newFocus = new Set();
-      newFocus.add(convert2dTo1d(row, col));
-      setFocus(newFocus);
-    }
+  // handler that will call addToFocus and add the focus state to it. then set the state based on the output
+  const handleFocus = (row, col, mod) => {
+    const newFocuses = addToFocus(row, col, mod, focus);
 
-    // add to last used focus
-    setLastFocus([row, col]);
+    setFocus(newFocuses.newFocus);
+    setLastFocus(newFocuses.lastFocus);
   };
 
   // helper function: create the board from cell components
@@ -394,18 +354,19 @@ function App() {
 
     for (let row = 0; row < MAX_ROW; row++) {
       for (let col = 0; col < MAX_COL; col++) {
-        const data = data__board[row][col];
-        boxArr[data.box].push(
+        const boxNum = sudoku__findBox(row, col);
+        boxArr[boxNum].push(
           <Cell
-            key={`cell_R${data.row}_C${data.col}`}
-            data={data}
-            value={valueArr[data.row][data.col]}
-            corner={cornerArr[data.row][data.col]}
-            center={centerArr[data.row][data.col]}
-            given={givenArr[data.row][data.col]}
+            key={`cell_R${row}_C${col}`}
+            row={row}
+            col={col}
+            value={valueArr[row][col]}
+            corner={cornerArr[row][col]}
+            center={centerArr[row][col]}
+            given={givenArr[row][col]}
             onCellClick={handleCellClick}
-            onCellDrag={addToFocus}
-            focus={focus.has(convert2dTo1d(data.row, data.col))}
+            onCellDrag={handleFocus}
+            focus={focus.has(convert2dTo1d(row, col))}
           ></Cell>
         );
       }
@@ -420,7 +381,7 @@ function App() {
     });
   };
 
-  // helper function: create 2d array of ararys
+  // helper function: create 2d array of ararys for corner and center
   function createBlankBoardArr() {
     const arr = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
 
@@ -476,16 +437,6 @@ function App() {
   // helper function: calculate next mode
   const nextMode = () => {
     return (mode + 1) % 3; // mod total modes
-  };
-
-  // helper function: convert 2d coord to a 1d index
-  const convert2dTo1d = (row, col) => {
-    return row * MAX_COL + col;
-  };
-
-  // helper function: convert 1d coord to 2d index
-  const convert1dTo2d = (index) => {
-    return [Math.trunc(index / MAX_COL), index % MAX_COL];
   };
 
   // helper function: determine what to display as a button for mode
@@ -587,7 +538,7 @@ function App() {
             className={
               "button" + (solved ? " button--solved" : " button--unsolved")
             }
-            onClick={() => setSolved(SudokuLibrary.checkSolved(valueArr))}
+            onClick={() => setSolved(sudoku__checkSolved(valueArr))}
           >
             Check Solved
           </button>
