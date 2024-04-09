@@ -40,9 +40,6 @@ function App() {
   // handlers
   // handleCellClick: when cell is clicked, highlight the cell as focus cell
   const handleCellClick = (row, col) => {
-    console.log("mod key", modKey);
-
-    console.log("handling cell click", row, col);
     // convert to 1d
     const index = convert2dTo1d(row, col);
     let newFocus;
@@ -156,12 +153,8 @@ function App() {
         setGivenArr(newGivenArr);
       }
 
-      // handle given input
-      if (inputGiven) {
-        handleGivenInput(row, col, e.keyCode);
-      }
       // valid 1 - 9
-      else if (49 <= e.keyCode && e.keyCode <= 57) {
+      if (49 <= e.keyCode && e.keyCode <= 57) {
         const num = e.keyCode - 49 + 1;
 
         // create new arr
@@ -173,6 +166,7 @@ function App() {
         } else {
           newArr = copyArr(valueArr);
         }
+        let newGivenArr = copyArr(givenArr);
 
         // check if all focus already has that number
         let deleteOnly = false;
@@ -190,19 +184,48 @@ function App() {
           // remove number from cells
           deleteOnly = true;
         }
+
         // if some cells do not have this number
         for (const index of focus) {
           const [row, col] = convert1dTo2d(index);
 
-          handleNumberInput(
-            row,
-            col,
-            num,
-            e.shiftKey,
-            e.ctrlKey,
-            newArr,
-            deleteOnly
-          );
+          if (e.shiftKey || e.ctrlKey) {
+            // includes? remove the number
+            if (newArr[row][col].includes(num)) {
+              if (deleteOnly) {
+                newArr[row][col] = newArr[row][col].filter(
+                  (arrNum) => arrNum !== num
+                );
+              }
+            }
+            // does not include -> add the number
+            else {
+              newArr[row][col].push(num);
+              newArr[row][col].sort((a, b) => a - b);
+            }
+          } else if (mode === 0) {
+            if (inputGiven || !givenArr[row][col]) {
+              newArr[row][col] = num;
+            }
+
+            if (inputGiven) {
+              newGivenArr[row][col] = true;
+            }
+          } else {
+            // includes? remove the number
+            if (newArr[row][col].includes(num)) {
+              if (deleteOnly) {
+                newArr[row][col] = newArr[row][col].filter(
+                  (arrNum) => arrNum !== num
+                );
+              }
+            }
+            // does not include -> add the number
+            else {
+              newArr[row][col].push(num);
+              newArr[row][col].sort((a, b) => a - b);
+            }
+          }
         }
 
         // set the changes all at once
@@ -213,74 +236,8 @@ function App() {
         } else {
           setValueArr(newArr);
         }
+        setGivenArr(newGivenArr);
       }
-    }
-  };
-
-  // function: handle given input
-  // misnomer -> is not a handler. called from keydown event
-  // make a pure function
-  const handleGivenInput = (row, col, keyCode) => {
-    // not in setting input mode
-    if (!inputGiven) {
-      return;
-    }
-
-    // no valid focus
-    if (row < 0 || col < 0) {
-      return;
-    }
-
-    // number 1 - 9
-    if (49 <= keyCode && keyCode <= 57) {
-      const num = keyCode - 49 + 1;
-
-      // set given number
-      const newArr = copyArr(valueArr);
-      newArr[row][col] = num;
-      setValueArr(newArr);
-
-      // set given flag
-      const newGivenArr = copyArr(givenArr);
-      newGivenArr[row][col] = true;
-      setGivenArr(newGivenArr);
-    }
-  };
-
-  // function: handle number input
-  const handleNumberInput = (
-    row,
-    col,
-    num,
-    shiftKey,
-    ctrlKey,
-    newArr,
-    deleteOnly
-  ) => {
-    // if given cell is a given, do nothing
-    if (givenArr[row][col]) {
-      return;
-    }
-
-    // shift key -> corner
-    if (shiftKey) {
-      setCorner(row, col, num, newArr, deleteOnly);
-    }
-    // ctrl key -> center
-    else if (ctrlKey) {
-      setCenter(row, col, num, newArr, deleteOnly);
-    }
-    // mode 1: pencil: corner
-    else if (mode === 1) {
-      setCorner(row, col, num, newArr, deleteOnly);
-    }
-    // mode 2: pencil: center -> ctrl key
-    else if (mode === 2) {
-      setCenter(row, col, num, newArr, deleteOnly);
-    }
-    // mode 0: pen -> no modifier key
-    else if (mode === 0) {
-      newArr[row][col] = num;
     }
   };
 
@@ -355,36 +312,6 @@ function App() {
         </section>
       );
     });
-  };
-
-  // helper function: fill in center
-  const setCenter = (row, col, num, newArr, deleteOnly) => {
-    // includes? remove the number
-    if (centerArr[row][col].includes(num)) {
-      if (deleteOnly) {
-        newArr[row][col] = newArr[row][col].filter((arrNum) => arrNum !== num);
-      }
-    }
-    // does not include -> add the number
-    else {
-      newArr[row][col].push(num);
-      newArr[row][col].sort((a, b) => a - b);
-    }
-  };
-
-  // helper function: fill in corner
-  const setCorner = (row, col, num, newArr, deleteOnly) => {
-    // includes? remove the number
-    if (cornerArr[row][col].includes(num)) {
-      if (deleteOnly) {
-        newArr[row][col] = newArr[row][col].filter((arrNum) => arrNum !== num);
-      }
-    }
-    // does not include -> add the number
-    else {
-      newArr[row][col].push(num);
-      newArr[row][col].sort((a, b) => a - b);
-    }
   };
 
   // helper function: calculate next mode

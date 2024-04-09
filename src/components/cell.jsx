@@ -4,8 +4,6 @@ import "./cell.css";
 const Cell = (props) => {
   // handlers
   const handleMouseDown = () => {
-    console.log("focus on", props.row, props.col);
-
     props.onCellClick(props.row, props.col);
   };
 
@@ -13,7 +11,6 @@ const Cell = (props) => {
     e.preventDefault();
 
     if (e.buttons === 1) {
-      console.log("mouse entered cell", props.row, props.col);
       props.onCellDrag(props.row, props.col, true);
     }
   };
