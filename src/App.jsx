@@ -6,6 +6,8 @@ import {
   copyArr,
   convert1dTo2d,
   convert2dTo1d,
+  createBlankBoardArr,
+  numberFormatter,
 } from "./utils/generalFunctions.js";
 import { checkFocusCells, addToFocus } from "./utils/focus.js";
 
@@ -34,8 +36,6 @@ function App() {
   const [baseTime, setBaseTime] = useState(Date.now());
   const [elapsedTime, setElapsedTime] = useState(Date.now());
   const [difficulty, setDifficulty] = useState("none");
-
-  // helpful functions
 
   // handlers
   // handleCellClick: when cell is clicked, highlight the cell as focus cell
@@ -66,11 +66,6 @@ function App() {
   // handleKeyDown: when key is pressed, handle the action to current set of focus
   const handleKeyDown = (e) => {
     e.preventDefault();
-
-    console.log("key press summary");
-    console.log("key pressed", e.keyCode);
-    console.log("shift", e.shiftKey);
-    console.log("ctrl", e.ctrlKey);
 
     // mod keys
     if (e.shiftKey && modKey !== "shift") {
@@ -116,13 +111,8 @@ function App() {
 
     // if there is at least one focus
     if (focus.size > 0) {
-      console.log("entered writing to focus");
-
-      // if already has -> remove from all
-
-      // if not -> add to all, do not remove any existing
-
       // backspace or delete
+      // remove number from value, corner, center
       if (e.keyCode === 8 || e.keyCode === 46) {
         let newArr;
         if (e.shiftKey) {
@@ -133,10 +123,25 @@ function App() {
           newArr = copyArr(valueArr);
         }
 
+        let newGivenArr = copyArr(givenArr);
+
         for (const index of focus) {
           const [row, col] = convert1dTo2d(index);
-          console.log("deleting", row, col);
-          handleDelete(row, col, e.shiftKey, e.ctrlKey, newArr);
+
+          // delete
+          if (e.shiftKey || e.ctrlKey) {
+            newArr[row][col].pop();
+          } else if (mode === 0) {
+            if (inputGiven || !givenArr[row][col]) {
+              newArr[row][col] = 0;
+            }
+          } else {
+            newArr[row][col].pop();
+          }
+
+          if (inputGiven) {
+            newGivenArr[row][col] = false;
+          }
         }
 
         // set the changes all at once
@@ -147,6 +152,8 @@ function App() {
         } else {
           setValueArr(newArr);
         }
+
+        setGivenArr(newGivenArr);
       }
 
       // handle given input
@@ -212,6 +219,7 @@ function App() {
 
   // function: handle given input
   // misnomer -> is not a handler. called from keydown event
+  // make a pure function
   const handleGivenInput = (row, col, keyCode) => {
     // not in setting input mode
     if (!inputGiven) {
@@ -236,38 +244,6 @@ function App() {
       const newGivenArr = copyArr(givenArr);
       newGivenArr[row][col] = true;
       setGivenArr(newGivenArr);
-    }
-    // delete or backspace
-    else if (keyCode === 8 || keyCode === 46) {
-      const newGivenArr = copyArr(givenArr);
-      newGivenArr[row][col] = false;
-      setGivenArr(newGivenArr);
-    }
-  };
-
-  // function: handle delete
-  // misnomer -> not a handler. called from keydown event
-  const handleDelete = (row, col, shiftKey, ctrlKey, newArr) => {
-    // using shift -> corner marking delete
-    if (shiftKey) {
-      deleteCorner(row, col, newArr);
-    }
-    // using ctrl -> center marking delete
-    else if (ctrlKey) {
-      deleteCenter(row, col, newArr);
-    }
-    // mode 0: pen
-    else if (mode === 0) {
-      newArr[row][col] = 0;
-      setValueArr(newArr);
-    }
-    // mode 1: pencil -> corner
-    else if (mode === 1) {
-      deleteCorner(row, col, newArr);
-    }
-    // mode 2: pencil -> center
-    else if (mode === 2) {
-      deleteCenter(row, col, newArr);
     }
   };
 
@@ -381,19 +357,6 @@ function App() {
     });
   };
 
-  // helper function: create 2d array of ararys for corner and center
-  function createBlankBoardArr() {
-    const arr = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
-
-    for (let row = 0; row < MAX_ROW; row++) {
-      for (let col = 0; col < MAX_COL; col++) {
-        arr[row][col] = [];
-      }
-    }
-
-    return arr;
-  }
-
   // helper function: fill in center
   const setCenter = (row, col, num, newArr, deleteOnly) => {
     // includes? remove the number
@@ -422,16 +385,6 @@ function App() {
       newArr[row][col].push(num);
       newArr[row][col].sort((a, b) => a - b);
     }
-  };
-
-  // delete from center
-  const deleteCenter = (row, col, newArr) => {
-    newArr[row][col].pop();
-  };
-
-  // delete from corner
-  const deleteCorner = (row, col, newArr) => {
-    newArr[row][col].pop();
   };
 
   // helper function: calculate next mode
@@ -472,14 +425,6 @@ function App() {
 
         setDifficulty(data.newboard.grids[0].difficulty);
       });
-  };
-
-  // help format numbers
-  const numberFormatter = (num) => {
-    return num.toLocaleString("en-US", {
-      minimumIntegerDigits: 2,
-      useGrouping: false,
-    });
   };
 
   // initial load
@@ -530,7 +475,7 @@ function App() {
           </section>
           <button className="button" onClick={() => setInputGiven(!inputGiven)}>
             {inputGiven ? "Stop Setting Given" : "Set Given"}
-          </button>{" "}
+          </button>
           <button className="button" onClick={() => setMode(nextMode())}>
             {modeLabel()}
           </button>

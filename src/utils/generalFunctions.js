@@ -24,4 +24,31 @@ const convert1dTo2d = (index) => {
   return [Math.trunc(index / MAX_COL), index % MAX_COL];
 };
 
-export { copyArr, convert1dTo2d, convert2dTo1d };
+// create 2d array of ararys for corner and center
+const createBlankBoardArr = () => {
+  const arr = Array.from(Array(MAX_ROW), () => Array(MAX_COL));
+
+  for (let row = 0; row < MAX_ROW; row++) {
+    for (let col = 0; col < MAX_COL; col++) {
+      arr[row][col] = [];
+    }
+  }
+
+  return arr;
+};
+
+// help format numbers
+const numberFormatter = (num) => {
+  return num.toLocaleString("en-US", {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  });
+};
+
+export {
+  copyArr,
+  convert1dTo2d,
+  convert2dTo1d,
+  createBlankBoardArr,
+  numberFormatter,
+};
