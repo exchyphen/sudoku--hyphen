@@ -1,13 +1,13 @@
 const MAX_ROW = 9;
 const MAX_COL = 9;
 
-// deep copy 2d arr
+// copy 2d arr: shallow -> reference to the same objects
 const copyArr = (arr) => {
   const newArr = Array.from(Array(arr.length), () => Array.from(arr[0].length));
 
-  for (let i = 0; i < arr.length; i++) {
-    for (let j = 0; j < arr[0].length; j++) {
-      newArr[i][j] = arr[i][j];
+  for (let row = 0; row < arr.length; row++) {
+    for (let col = 0; col < arr[0].length; col++) {
+      newArr[row][col] = arr[row][col];
     }
   }
 
@@ -30,7 +30,15 @@ const createBlankBoardArr = () => {
 
   for (let row = 0; row < MAX_ROW; row++) {
     for (let col = 0; col < MAX_COL; col++) {
-      arr[row][col] = [];
+      arr[row][col] = {
+        row: row,
+        col: col,
+        value: 0,
+        corner: [],
+        center: [],
+        error: new Set(),
+        given: false,
+      };
     }
   }
 

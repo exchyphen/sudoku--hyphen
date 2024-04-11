@@ -9,7 +9,7 @@ import {
   createBlankBoardArr,
   numberFormatter,
 } from "./utils/generalFunctions.js";
-import { checkFocusCells, addToFocus } from "./utils/focus.js";
+import { focus__checkCells, focus__add } from "./utils/focus.js";
 
 import Cell from "./components/cell.jsx";
 
@@ -20,14 +20,8 @@ function App() {
   // states
   const [focus, setFocus] = useState(new Set());
   const [lastFocus, setLastFocus] = useState([-1, -1]);
-  const [valueArr, setValueArr] = useState(
-    Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0))
-  );
-  const [cornerArr, setCornerArr] = useState(createBlankBoardArr());
-  const [centerArr, setCenterArr] = useState(createBlankBoardArr());
-  const [givenArr, setGivenArr] = useState(
-    Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(false))
-  );
+
+  const [board, setBoard] = useState(createBlankBoardArr());
   const [inputGiven, setInputGiven] = useState(false);
   // 0 = pen, 1 = corner marking
   const [mode, setMode] = useState(0);
@@ -109,134 +103,102 @@ function App() {
     // if there is at least one focus
     if (focus.size > 0) {
       // backspace or delete
-      // remove number from value, corner, center
       if (e.keyCode === 8 || e.keyCode === 46) {
-        let newArr;
-        if (e.shiftKey) {
-          newArr = copyArr(cornerArr);
-        } else if (e.ctrlKey) {
-          newArr = copyArr(centerArr);
-        } else {
-          newArr = copyArr(valueArr);
-        }
-
-        let newGivenArr = copyArr(givenArr);
-
+        // new board array
+        const newBoard = copyArr(board);
         for (const index of focus) {
           const [row, col] = convert1dTo2d(index);
 
-          // delete
-          if (e.shiftKey || e.ctrlKey) {
-            newArr[row][col].pop();
-          } else if (mode === 0) {
-            if (inputGiven || !givenArr[row][col]) {
-              newArr[row][col] = 0;
+          // corner marking
+          if (e.shiftKey || mode === 1) {
+            newBoard[row][col].corner.pop();
+          }
+          // center marking
+          else if (e.ctrlKey || mode === 2) {
+            newBoard[row][col].center.pop();
+          }
+          // pen marking
+          else {
+            // if we are modifying givens
+            if (inputGiven) {
+              newBoard[row][col].value = 0;
+              newBoard[row][col].given = false;
             }
-          } else {
-            newArr[row][col].pop();
-          }
-
-          if (inputGiven) {
-            newGivenArr[row][col] = false;
+            // if we cannot modify givens and the focus is NOT a given cell
+            else if (!newBoard[row][col].given) {
+              newBoard[row][col].value = 0;
+            }
+            // if we cannot modify givens and the focus is a given cell -> do nothing
           }
         }
-
-        // set the changes all at once
-        if (e.shiftKey) {
-          setCornerArr(newArr);
-        } else if (e.ctrlKey) {
-          setCenterArr(newArr);
-        } else {
-          setValueArr(newArr);
-        }
-
-        setGivenArr(newGivenArr);
+        setBoard(newBoard);
       }
 
       // valid 1 - 9
       if (49 <= e.keyCode && e.keyCode <= 57) {
         const num = e.keyCode - 49 + 1;
 
-        // create new arr
-        let newArr;
-        if (e.shiftKey) {
-          newArr = copyArr(cornerArr);
-        } else if (e.ctrlKey) {
-          newArr = copyArr(centerArr);
-        } else {
-          newArr = copyArr(valueArr);
-        }
-        let newGivenArr = copyArr(givenArr);
+        const newBoard = copyArr(board);
 
         // check if all focus already has that number
         let deleteOnly = false;
-        if (
-          checkFocusCells(
-            num,
-            e.shiftKey,
-            e.ctrlKey,
-            focus,
-            cornerArr,
-            centerArr,
-            valueArr
-          )
-        ) {
+        if (focus__checkCells(num, e.shiftKey, e.ctrlKey, focus, newBoard)) {
           // remove number from cells
           deleteOnly = true;
         }
 
-        // if some cells do not have this number
+        // go through focus
         for (const index of focus) {
           const [row, col] = convert1dTo2d(index);
 
-          if (e.shiftKey || e.ctrlKey) {
-            // includes? remove the number
-            if (newArr[row][col].includes(num)) {
+          // corner
+          if (e.shiftKey || mode === 1) {
+            // if the number exists already -> remove if all focus has this number (deleteOnly is true) or do nothing
+            if (newBoard[row][col].corner.includes(num)) {
               if (deleteOnly) {
-                newArr[row][col] = newArr[row][col].filter(
+                newBoard[row][col].corner = newBoard[row][col].corner.filter(
                   (arrNum) => arrNum !== num
                 );
               }
             }
-            // does not include -> add the number
+            // number does not exists -> add
             else {
-              newArr[row][col].push(num);
-              newArr[row][col].sort((a, b) => a - b);
+              newBoard[row][col].corner.push(num);
+              newBoard[row][col].corner.sort((a, b) => a - b);
             }
-          } else if (mode === 0) {
-            if (inputGiven || !givenArr[row][col]) {
-              newArr[row][col] = num;
+          }
+          // center
+          else if (e.ctrlKey || mode === 2) {
+            // if the number exists already -> remove if all focus has this number (deleteOnly is true) or do nothing
+            if (newBoard[row][col].center.includes(num)) {
+              if (deleteOnly) {
+                newBoard[row][col].center = newBoard[row][col].center.filter(
+                  (arrNum) => arrNum !== num
+                );
+              }
             }
-
+            // number does not exists -> add
+            else {
+              newBoard[row][col].center.push(num);
+              newBoard[row][col].center.sort((a, b) => a - b);
+            }
+          }
+          // pen
+          else {
+            // if we are modifying givens
             if (inputGiven) {
-              newGivenArr[row][col] = true;
+              newBoard[row][col].value = num;
+              newBoard[row][col].given = true;
             }
-          } else {
-            // includes? remove the number
-            if (newArr[row][col].includes(num)) {
-              if (deleteOnly) {
-                newArr[row][col] = newArr[row][col].filter(
-                  (arrNum) => arrNum !== num
-                );
-              }
+            // if we cannot modify givens and the focus is NOT a given cell
+            else if (!newBoard[row][col].given) {
+              newBoard[row][col].value = num;
             }
-            // does not include -> add the number
-            else {
-              newArr[row][col].push(num);
-              newArr[row][col].sort((a, b) => a - b);
-            }
+            // if we cannot modify givens and the focus is a given cell -> do nothing
           }
         }
 
-        // set the changes all at once
-        if (e.shiftKey) {
-          setCornerArr(newArr);
-        } else if (e.ctrlKey) {
-          setCenterArr(newArr);
-        } else {
-          setValueArr(newArr);
-        }
-        setGivenArr(newGivenArr);
+        setBoard(newBoard);
       }
     }
   };
@@ -244,35 +206,28 @@ function App() {
   // handler: when clear button is pressed
   const handleClear = (clearGiven) => {
     setFocus(new Set());
-    setCornerArr(createBlankBoardArr());
-    setCenterArr(createBlankBoardArr());
     setMode(0);
     setSolved(false);
 
-    // give choice of clearing current puzzle givens or not
-    if (clearGiven) {
-      setValueArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(0)));
-      setGivenArr(Array.from(Array(MAX_ROW), () => Array(MAX_COL).fill(false)));
-    } else {
-      const newArr = copyArr(valueArr);
+    const newBoard = createBlankBoardArr();
 
+    if (!clearGiven) {
       for (let row = 0; row < MAX_ROW; row++) {
         for (let col = 0; col < MAX_COL; col++) {
-          if (!givenArr[row][col]) {
-            newArr[row][col] = 0;
-          }
+          newBoard[row][col].value = board[row][col].value;
+          newBoard[row][col].given = board[row][col].given;
         }
       }
-
-      setValueArr(newArr);
     }
+
+    setBoard(newBoard);
 
     setBaseTime(Date.now());
   };
 
-  // handler that will call addToFocus and add the focus state to it. then set the state based on the output
+  // handler that will call focus__add and add the focus state to it. then set the state based on the output
   const handleFocus = (row, col, mod) => {
-    const newFocuses = addToFocus(row, col, mod, focus);
+    const newFocuses = focus__add(row, col, mod, focus);
 
     setFocus(newFocuses.newFocus);
     setLastFocus(newFocuses.lastFocus);
@@ -293,10 +248,10 @@ function App() {
             key={`cell_R${row}_C${col}`}
             row={row}
             col={col}
-            value={valueArr[row][col]}
-            corner={cornerArr[row][col]}
-            center={centerArr[row][col]}
-            given={givenArr[row][col]}
+            value={board[row][col].value}
+            corner={board[row][col].corner}
+            center={board[row][col].center}
+            given={board[row][col].given}
             onCellClick={handleCellClick}
             onCellDrag={handleFocus}
             focus={focus.has(convert2dTo1d(row, col))}
@@ -345,10 +300,18 @@ function App() {
     )
       .then((response) => response.json())
       .then((data) => {
-        const board = data.newboard.grids[0].value;
+        const fetchedBoard = data.newboard.grids[0].value;
 
-        setValueArr(copyArr(board));
-        setGivenArr(copyArr(board));
+        // set value and given properties of board object
+        const newBoard = createBlankBoardArr();
+        for (let row = 0; row < MAX_ROW; row++) {
+          for (let col = 0; col < MAX_COL; col++) {
+            newBoard[row][col].value = fetchedBoard[row][col];
+            newBoard[row][col].given = fetchedBoard[row][col] > 0;
+          }
+        }
+
+        setBoard(newBoard);
 
         setDifficulty(data.newboard.grids[0].difficulty);
       });
@@ -410,7 +373,7 @@ function App() {
             className={
               "button" + (solved ? " button--solved" : " button--unsolved")
             }
-            onClick={() => setSolved(sudoku__checkSolved(valueArr))}
+            onClick={() => setSolved(sudoku__checkSolved(board))}
           >
             Check Solved
           </button>
