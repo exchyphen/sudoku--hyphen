@@ -17,19 +17,6 @@ const createSeeMap = () => {
   ]);
 };
 
-// copy 2d arr: shallow -> reference to the same objects
-const copyArr = (arr) => {
-  const newArr = Array.from(Array(arr.length), () => Array.from(arr[0].length));
-
-  for (let row = 0; row < arr.length; row++) {
-    for (let col = 0; col < arr[0].length; col++) {
-      newArr[row][col] = arr[row][col];
-    }
-  }
-
-  return newArr;
-};
-
 // convert 2d coord to a 1d index
 const convert2dTo1d = (row, col) => {
   return row * MAX_COL + col;
@@ -71,10 +58,4 @@ const numberFormatter = (num) => {
   });
 };
 
-export {
-  copyArr,
-  convert1dTo2d,
-  convert2dTo1d,
-  createBlankBoardArr,
-  numberFormatter,
-};
+export { convert1dTo2d, convert2dTo1d, createBlankBoardArr, numberFormatter };

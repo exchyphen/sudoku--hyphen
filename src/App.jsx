@@ -3,7 +3,6 @@ import "./App.css";
 
 import { sudoku__findBox, sudoku__checkSolved } from "./utils/sudokuSolver.js";
 import {
-  copyArr,
   convert1dTo2d,
   convert2dTo1d,
   createBlankBoardArr,
@@ -122,7 +121,7 @@ function App() {
       // backspace or delete
       if (e.keyCode === 8 || e.keyCode === 46) {
         // new board array
-        const newBoard = copyArr(board);
+        const newBoard = structuredClone(board);
         for (const index of focus) {
           const [row, col] = convert1dTo2d(index);
 
@@ -184,7 +183,7 @@ function App() {
       if (49 <= e.keyCode && e.keyCode <= 57) {
         const num = e.keyCode - 49 + 1;
 
-        const newBoard = copyArr(board);
+        const newBoard = structuredClone(board);
 
         // check if all focus already has that number
         let deleteOnly = false;
@@ -246,27 +245,56 @@ function App() {
               newBoard[row][col].value = num;
             }
 
-            // add to see's row, col, box
-            // add to all rows
+            // add to see's row, col, box and remove the previous number
+            const prevNum = board[row][col].value;
+
+            // add new number and remove old number to all rows
             for (let r = 0; r < MAX_ROW; r++) {
+              // add
               newBoard[r][col].seeRow.set(
                 num,
                 1 + newBoard[r][col].seeRow.get(num)
               );
+
+              // remove previous number
+              if (prevNum !== 0) {
+                newBoard[r][col].seeRow.set(
+                  prevNum,
+                  newBoard[r][col].seeRow.get(prevNum) - 1
+                );
+              }
             }
-            // add to all cols
+            // same change to all cols
             for (let c = 0; c < MAX_COL; c++) {
+              // add
               newBoard[row][c].seeCol.set(
                 num,
                 1 + newBoard[row][c].seeCol.get(num)
               );
+
+              // remove previous number
+              if (prevNum !== 0) {
+                newBoard[row][c].seeCol.set(
+                  prevNum,
+                  newBoard[row][c].seeCol.get(prevNum) - 1
+                );
+              }
             }
-            // add to all boxes
+            // same change to all boxes
             for (const [r, c] of boxArr[sudoku__findBox(row, col)]) {
+              // add
               newBoard[r][c].seeBox.set(
                 num,
                 1 + newBoard[r][c].seeBox.get(num)
               );
+
+              // remove previous number
+              if (prevNum !== 0) {
+                newBoard[r][c].seeBox.set(
+                  prevNum,
+                  newBoard[r][c].seeBox.get(prevNum) - 1
+                );
+              }
             }
           }
         }
@@ -284,11 +312,41 @@ function App() {
 
     const newBoard = createBlankBoardArr();
 
+    // set givens again, remember to set see's
     if (!clearGiven) {
       for (let row = 0; row < MAX_ROW; row++) {
         for (let col = 0; col < MAX_COL; col++) {
-          newBoard[row][col].value = board[row][col].value;
-          newBoard[row][col].given = board[row][col].given;
+          if (board[row][col].given) {
+            newBoard[row][col].value = board[row][col].value;
+            newBoard[row][col].given = board[row][col].given;
+
+            // add to see's
+            const num = board[row][col].value;
+            // add new number and remove old number to all rows
+            for (let r = 0; r < MAX_ROW; r++) {
+              // add
+              newBoard[r][col].seeRow.set(
+                num,
+                1 + newBoard[r][col].seeRow.get(num)
+              );
+            }
+            // same change to all cols
+            for (let c = 0; c < MAX_COL; c++) {
+              // add
+              newBoard[row][c].seeCol.set(
+                num,
+                1 + newBoard[row][c].seeCol.get(num)
+              );
+            }
+            // same change to all boxes
+            for (const [r, c] of boxArr[sudoku__findBox(row, col)]) {
+              // add
+              newBoard[r][c].seeBox.set(
+                num,
+                1 + newBoard[r][c].seeBox.get(num)
+              );
+            }
+          }
         }
       }
     }
@@ -376,8 +434,33 @@ function App() {
         const newBoard = createBlankBoardArr();
         for (let row = 0; row < MAX_ROW; row++) {
           for (let col = 0; col < MAX_COL; col++) {
-            newBoard[row][col].value = fetchedBoard[row][col];
-            newBoard[row][col].given = fetchedBoard[row][col] > 0;
+            const num = fetchedBoard[row][col];
+
+            newBoard[row][col].value = num;
+            newBoard[row][col].given = num > 0;
+
+            // add to row, col, box
+            // add to all rows
+            for (let r = 0; r < MAX_ROW; r++) {
+              newBoard[r][col].seeRow.set(
+                num,
+                1 + newBoard[r][col].seeRow.get(num)
+              );
+            }
+            // add to all cols
+            for (let c = 0; c < MAX_COL; c++) {
+              newBoard[row][c].seeCol.set(
+                num,
+                1 + newBoard[row][c].seeCol.get(num)
+              );
+            }
+            // add to all boxes
+            for (const [r, c] of boxArr[sudoku__findBox(row, col)]) {
+              newBoard[r][c].seeBox.set(
+                num,
+                1 + newBoard[r][c].seeBox.get(num)
+              );
+            }
           }
         }
 
