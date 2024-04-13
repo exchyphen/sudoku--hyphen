@@ -31,6 +31,23 @@ function App() {
   const [elapsedTime, setElapsedTime] = useState(Date.now());
   const [difficulty, setDifficulty] = useState("none");
 
+  // create iterable box arrays
+  const createBoxArr = () => {
+    const arr = Array(9);
+
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = [];
+    }
+
+    for (let row = 0; row < MAX_ROW; row++) {
+      for (let col = 0; col < MAX_COL; col++) {
+        arr[sudoku__findBox(row, col)].push([row, col]);
+      }
+    }
+    return arr;
+  };
+  const boxArr = createBoxArr();
+
   // handlers
   // handleCellClick: when cell is clicked, highlight the cell as focus cell
   const handleCellClick = (row, col) => {
@@ -119,6 +136,13 @@ function App() {
           }
           // pen marking
           else {
+            // if we cannot modify givens and the focus is a given cell -> do nothing
+            if (!inputGiven && newBoard[row][col].given) {
+              continue;
+            }
+
+            const num = board[row][col].value;
+
             // if we are modifying givens
             if (inputGiven) {
               newBoard[row][col].value = 0;
@@ -128,7 +152,29 @@ function App() {
             else if (!newBoard[row][col].given) {
               newBoard[row][col].value = 0;
             }
-            // if we cannot modify givens and the focus is a given cell -> do nothing
+
+            // remove from see's row, col, box
+            // remove from all rows
+            for (let r = 0; r < MAX_ROW; r++) {
+              newBoard[r][col].seeRow.set(
+                num,
+                newBoard[r][col].seeRow.get(num) - 1
+              );
+            }
+            // remove from all cols
+            for (let c = 0; c < MAX_COL; c++) {
+              newBoard[row][c].seeCol.set(
+                num,
+                newBoard[row][c].seeCol.get(num) - 1
+              );
+            }
+            // remove from all boxes
+            for (const [r, c] of boxArr[sudoku__findBox(row, col)]) {
+              newBoard[r][c].seeBox.set(
+                num,
+                newBoard[r][c].seeBox.get(num) - 1
+              );
+            }
           }
         }
         setBoard(newBoard);
@@ -185,6 +231,11 @@ function App() {
           }
           // pen
           else {
+            // if we cannot modify givens and the focus is a given cell -> do nothing
+            if (!inputGiven && newBoard[row][col].given) {
+              continue;
+            }
+
             // if we are modifying givens
             if (inputGiven) {
               newBoard[row][col].value = num;
@@ -194,7 +245,29 @@ function App() {
             else if (!newBoard[row][col].given) {
               newBoard[row][col].value = num;
             }
-            // if we cannot modify givens and the focus is a given cell -> do nothing
+
+            // add to see's row, col, box
+            // add to all rows
+            for (let r = 0; r < MAX_ROW; r++) {
+              newBoard[r][col].seeRow.set(
+                num,
+                1 + newBoard[r][col].seeRow.get(num)
+              );
+            }
+            // add to all cols
+            for (let c = 0; c < MAX_COL; c++) {
+              newBoard[row][c].seeCol.set(
+                num,
+                1 + newBoard[row][c].seeCol.get(num)
+              );
+            }
+            // add to all boxes
+            for (const [r, c] of boxArr[sudoku__findBox(row, col)]) {
+              newBoard[r][c].seeBox.set(
+                num,
+                1 + newBoard[r][c].seeBox.get(num)
+              );
+            }
           }
         }
 
@@ -246,12 +319,7 @@ function App() {
         boxArr[boxNum].push(
           <Cell
             key={`cell_R${row}_C${col}`}
-            row={row}
-            col={col}
-            value={board[row][col].value}
-            corner={board[row][col].corner}
-            center={board[row][col].center}
-            given={board[row][col].given}
+            cell={board[row][col]}
             onCellClick={handleCellClick}
             onCellDrag={handleFocus}
             focus={focus.has(convert2dTo1d(row, col))}
@@ -268,6 +336,8 @@ function App() {
       );
     });
   };
+
+  // can be made pure functions and extract to another file: nextMode, modeLabel
 
   // helper function: calculate next mode
   const nextMode = () => {

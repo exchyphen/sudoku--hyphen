@@ -1,5 +1,21 @@
+// internal variables
 const MAX_ROW = 9;
 const MAX_COL = 9;
+
+// internal functions
+const createSeeMap = () => {
+  return new Map([
+    [1, 0],
+    [2, 0],
+    [3, 0],
+    [4, 0],
+    [5, 0],
+    [6, 0],
+    [7, 0],
+    [8, 0],
+    [9, 0],
+  ]);
+};
 
 // copy 2d arr: shallow -> reference to the same objects
 const copyArr = (arr) => {
@@ -36,7 +52,9 @@ const createBlankBoardArr = () => {
         value: 0,
         corner: [],
         center: [],
-        error: new Set(),
+        seeRow: createSeeMap(),
+        seeCol: createSeeMap(),
+        seeBox: createSeeMap(),
         given: false,
       };
     }

@@ -4,15 +4,52 @@ import "./cell.css";
 const Cell = (props) => {
   // handlers
   const handleMouseDown = () => {
-    props.onCellClick(props.row, props.col);
+    props.onCellClick(props.cell.row, props.cell.col);
   };
 
   const handleMouseEnter = (e) => {
     e.preventDefault();
 
     if (e.buttons === 1) {
-      props.onCellDrag(props.row, props.col, true);
+      props.onCellDrag(props.cell.row, props.cell.col, true);
     }
+  };
+
+  // helper function
+  const checkError = (num, pen) => {
+    if (pen) {
+      // row
+      if (props.cell.seeRow.get(num) > 1) {
+        return true;
+      }
+
+      // col
+      if (props.cell.seeCol.get(num) > 1) {
+        return true;
+      }
+
+      // box
+      if (props.cell.seeBox.get(num) > 1) {
+        return true;
+      }
+    } else {
+      // row
+      if (props.cell.seeRow.get(num) > 0) {
+        return true;
+      }
+
+      // col
+      if (props.cell.seeCol.get(num) > 0) {
+        return true;
+      }
+
+      // box
+      if (props.cell.seeBox.get(num) > 0) {
+        return true;
+      }
+    }
+
+    return false;
   };
 
   return (
@@ -20,35 +57,57 @@ const Cell = (props) => {
       className={
         "cell" +
         (props.focus ? " cell--focus" : "") +
-        (props.given ? " cell--given" : "")
+        (props.cell.given ? " cell--given" : "")
       }
       onMouseEnter={handleMouseEnter}
       onMouseDown={handleMouseDown}
     >
       <div className="cell__pencil pencil--corner">
-        {props.corner.slice(0, 4).map((data, index) => {
-          return <div key={`pencilCorner${index}`}>{data}</div>;
+        {props.cell.corner.slice(0, 4).map((data, index) => {
+          return (
+            <div
+              key={`pencilCorner${index}`}
+              className={checkError(data, false) ? " cell--error" : ""}
+            >
+              {data}
+            </div>
+          );
         })}
       </div>
       <div className="cell__pencil pencil--center">
-        {props.center.map((data, index) => {
-          return <div key={`pencilCenter${index}`}>{data}</div>;
+        {props.cell.center.map((data, index) => {
+          return (
+            <div
+              key={`pencilCenter${index}`}
+              className={checkError(data, false) ? " cell--error" : ""}
+            >
+              {data}
+            </div>
+          );
         })}
       </div>
       <div className="cell__pencil pencil--corner">
-        {props.corner.slice(4).map((data, index) => {
-          return <div key={`pencilCorner${index + 4}`}>{data}</div>;
+        {props.cell.corner.slice(4).map((data, index) => {
+          return (
+            <div
+              key={`pencilCorner${index + 4}`}
+              className={checkError(data, false) ? " cell--error" : ""}
+            >
+              {data}
+            </div>
+          );
         })}
       </div>
-      {props.value === 0 ? null : (
+      {props.cell.value === 0 ? null : (
         <div
           className={
             "cell--solved" +
             (props.focus ? " cell--focus" : "") +
-            (props.given ? " cell--given" : "")
+            (props.cell.given ? " cell--given" : "") +
+            (checkError(props.cell.value, true) ? " cell--error" : "")
           }
         >
-          {props.value}
+          {props.cell.value}
         </div>
       )}
     </div>
