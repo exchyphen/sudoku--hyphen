@@ -1,5 +1,9 @@
 # Sudoku-
 
+## Active Link
+
+[Sudoku- by exc](https://exchyphen.github.io/sudoku--hyphen/)
+
 ## Description
 
 A tool to play Sudoku on.
