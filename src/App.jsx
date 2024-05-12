@@ -11,6 +11,7 @@ import {
 import { focus__checkCells, focus__add } from "./utils/focus.js";
 
 import Cell from "./components/cell.jsx";
+import Timer from "./components/timer.jsx";
 
 function App() {
   const MAX_ROW = 9;
@@ -26,8 +27,9 @@ function App() {
   const [mode, setMode] = useState(0);
   const [solved, setSolved] = useState(false);
   const [modKey, setModKey] = useState("none");
-  const [baseTime, setBaseTime] = useState(Date.now());
-  const [elapsedTime, setElapsedTime] = useState(Date.now());
+  const [timer, setTimer] = useState(0);
+
+  // just to display what the fetched puzzle difficulty is
   const [difficulty, setDifficulty] = useState("none");
 
   // create iterable box arrays
@@ -47,7 +49,23 @@ function App() {
   };
   const boxArr = createBoxArr();
 
+  // helper function: check puzzle
+  const checkPuzzle = (board) => {
+    const res = sudoku__checkSolved(board);
+    setSolved(res);
+    if (res) {
+      setTimer(2);
+    }
+    console.log("pen input changed");
+  };
+
   // handlers
+  // handle setting inputs
+  const handleInputGiven = () => {
+    setTimer(inputGiven ? 1 : 0);
+    setInputGiven(!inputGiven);
+  };
+
   // handleCellClick: when cell is clicked, highlight the cell as focus cell
   const handleCellClick = (row, col) => {
     // convert to 1d
@@ -192,6 +210,9 @@ function App() {
           deleteOnly = true;
         }
 
+        // if pen input changed -> we should check solved
+        let penChange = false;
+
         // go through focus
         for (const index of focus) {
           const [row, col] = convert1dTo2d(index);
@@ -234,6 +255,8 @@ function App() {
             if (!inputGiven && newBoard[row][col].given) {
               continue;
             }
+
+            penChange = true;
 
             // if we are modifying givens
             if (inputGiven) {
@@ -300,6 +323,9 @@ function App() {
         }
 
         setBoard(newBoard);
+        if (penChange && !inputGiven) {
+          checkPuzzle(newBoard);
+        }
       }
     }
   };
@@ -353,7 +379,7 @@ function App() {
 
     setBoard(newBoard);
 
-    setBaseTime(Date.now());
+    setTimer(clearGiven ? 0 : 1);
   };
 
   // handler that will call focus__add and add the focus state to it. then set the state based on the output
@@ -470,21 +496,6 @@ function App() {
       });
   };
 
-  // initial load
-  useEffect(() => {
-    const timeInterval = setInterval(() => {
-      setElapsedTime(Date.now());
-    }, 1000);
-
-    return () => clearInterval(timeInterval);
-  }, []);
-
-  useEffect(() => {
-    if (inputGiven === false) {
-      setBaseTime(Date.now());
-    }
-  }, [inputGiven]);
-
   return (
     <>
       <header>
@@ -504,19 +515,10 @@ function App() {
         </article>
         <article className="controls">
           <h1>Controls</h1>
-          <section className="time">
-            <div className="time__title">Time</div>
-            <div>
-              {numberFormatter(
-                Math.trunc((elapsedTime - baseTime) / 1000 / 60)
-              )}
-              :
-              {numberFormatter(
-                Math.trunc((elapsedTime - baseTime) / 1000) % 60
-              )}
-            </div>
-          </section>
-          <button className="button" onClick={() => setInputGiven(!inputGiven)}>
+
+          <Timer status={timer}></Timer>
+
+          <button className="button" onClick={() => handleInputGiven()}>
             {inputGiven ? "Stop Setting Given" : "Set Given"}
           </button>
           <button className="button" onClick={() => setMode(nextMode())}>

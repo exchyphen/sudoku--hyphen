@@ -52,6 +52,8 @@ const createBlankBoardArr = () => {
 
 // help format numbers
 const numberFormatter = (num) => {
+  num = Math.max(0, num);
+
   return num.toLocaleString("en-US", {
     minimumIntegerDigits: 2,
     useGrouping: false,
